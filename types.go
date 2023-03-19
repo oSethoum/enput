@@ -10,5 +10,9 @@ type extension struct {
 	hooks []gen.Hook
 }
 
-type Data struct {
+type data struct {
+	Schemas []schema
+}
+
+type schema struct {
 }
