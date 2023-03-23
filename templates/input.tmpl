@@ -1,0 +1,129 @@
+package ent
+
+{{ $imps := imports .}}
+{{ $imps_len := len $imps }}
+{{ $g := .}}
+
+{{- if gt $imps_len 0 }}
+import (
+    {{ range $imps}}
+    "{{ . }}"
+    {{ end }}
+)
+{{- end}}
+
+{{- range .Schemas }}
+    type {{ .Name }}CreateInput struct {
+        {{- range .Fields }}
+            {{ pascal .Name }} {{ if null_field_create . -}}*{{- end -}}{{ extract_type . }} `{{ tag . }}`
+        {{- end }}
+        
+        {{- range .Edges }}
+            {{- if edge_field . | not }}
+                {{- if .Unique}}
+                    {{- if .Required }}
+                        {{ pascal .Name }}ID {{ $g.Config.IDType }} `json:"{{ camel .Name }}Id"`
+                    {{- else}}
+                        {{ pascal .Name }}ID *{{ $g.Config.IDType }} `json:"{{ camel .Name }}Id"`
+                    {{- end}}
+                {{- else}}
+                    Add{{ pascal .Name }}IDs []{{ $g.Config.IDType }} `json:"add{{pascal .Name}}Ids"`
+                {{- end }}
+            {{- end }}
+        {{- end -}}
+    }
+    func (i *{{ .Name }}CreateInput) Mutate(m *{{ .Name }}Mutation) {
+        {{- range .Fields }}
+            {{- if null_field_create .}} 
+            if v := i.{{ pascal .Name }}; v != nil {
+            m.Set{{pascal .Name}}(*v)
+            }
+            {{- else }}
+            m.Set{{pascal .Name}}(i.{{ pascal .Name }})
+            {{- end }}
+        {{- end }}
+        {{- range .Edges }}
+            {{- if edge_field . | not}}
+                {{- if .Unique }}
+                    {{- if .Required }}
+                    m.Set{{pascal .Name}}ID(i.{{ pascal .Name }}ID)
+                    {{- else }}
+                    if v := i.{{ pascal .Name }}ID; v!= nil {
+                        m.Set{{pascal .Name}}ID(*v)
+                    }
+                    {{- end }}
+                {{- else }}
+                    m.Add{{ singular .Name | pascal }}IDs(i.Add{{ pascal .Name }}IDs...)
+                {{- end }}
+            {{- end }}
+        {{- end}}
+    }
+    func (c *{{ .Name }}Create) SetInput(i *{{ .Name }}CreateInput) {
+        i.Mutate(c.Mutation())
+    }
+
+    type {{ .Name }}UpdateInput struct {
+        {{- range .Fields }}
+            {{ pascal .Name }} {{ if null_field_update . -}}*{{- end -}} {{ extract_type . }} `{{ tag . }}`
+        {{- end }}
+        {{- range .Edges }}
+        {{- if edge_field . | not }}
+            {{- if .Unique}}
+                {{- if .Required }}
+                    {{ pascal .Name }}ID {{ $g.Config.IDType }} `json:"{{ camel .Name }}Id"`
+                {{- else }}
+                    {{ pascal .Name }}ID *{{ $g.Config.IDType }} `json:"{{ camel .Name }}Id"`
+                    Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }}"`
+                {{- end }}
+            {{- else }}
+                Add{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `json:"{{ singular .Name | camel }}Ids"`
+                {{- if not .Required }}
+                    Remove{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `json:"remove{{ singular .Name | pascal }}Ids"`
+                    Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }}"`
+                {{- end }}
+            {{- end}}
+        {{- end }}
+    {{- end}}
+    }
+    func (i *{{ .Name }}UpdateInput) Mutate(m *{{ .Name }}Mutation) {
+    {{- range .Fields }}
+        {{- if null_field_update .}} 
+        if v := i.{{ pascal .Name }}; v != nil {
+        m.Set{{pascal .Name}}(*v)
+        }
+        {{- else }}
+        m.Set{{pascal .Name}}(i.{{ pascal .Name }})
+        {{- end }}
+    {{- end -}}
+    {{- range .Edges}}
+        {{- if edge_field . | not }}
+            {{- if .Unique}}
+                {{- if .Required }}
+                    m.Set{{ pascal .Name }}ID(i.{{ pascal .Name }}ID)
+                {{- else }}
+                    if v := i.{{ pascal .Name }}ID; v != nil {
+                        m.Set{{ pascal .Name }}ID(*v)
+                    }
+                    if i.Clear{{ pascal .Name }} {
+                        m.Clear{{ pascal .Name }}()
+                    }
+                {{- end }}
+            {{- else }}
+                m.Add{{ singular .Name | pascal }}IDs(i.Add{{ singular .Name | pascal }}IDs...)
+                {{- if not .Required }}
+                    m.Remove{{ singular .Name | pascal }}IDs(i.Remove{{ singular .Name | pascal }}IDs...)
+                    if i.Clear{{ pascal .Name }} {
+                        m.Clear{{ pascal .Name }}()
+                    }
+                {{- end }}
+            {{- end}}
+        {{- end }}
+    {{- end}}
+    }
+    func (u *{{ .Name }}Update) SetInput(i *{{ .Name }}UpdateInput) {
+        i.Mutate(u.Mutation())
+    }
+    func (uo *{{ .Name }}UpdateOne) SetInput(i *{{ .Name }}UpdateInput) {
+        i.Mutate(uo.Mutation())
+    }
+{{ end }}

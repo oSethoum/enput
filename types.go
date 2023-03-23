@@ -10,9 +10,4 @@ type extension struct {
 	hooks []gen.Hook
 }
 
-type data struct {
-	Schemas []schema
-}
-
-type schema struct {
-}
+type Comparable interface{ ~string | ~int | ~float32 }
