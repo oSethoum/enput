@@ -59,8 +59,9 @@ import (
         {{- end}}
     }
 
-    func (c *{{ .Name }}Create) SetInput(i *{{ .Name }}CreateInput) {
+    func (c *{{ .Name }}Create) SetInput(i *{{ .Name }}CreateInput) c *{{ .Name }}Create {
         i.Mutate(c.Mutation())
+        return c
     }
 
     type {{ .Name }}UpdateInput struct {
@@ -123,11 +124,13 @@ import (
     {{- end}}
     }
 
-    func (u *{{ .Name }}Update) SetInput(i *{{ .Name }}UpdateInput) {
+    func (u *{{ .Name }}Update) SetInput(i *{{ .Name }}UpdateInput) *{{ .Name }}Update {
         i.Mutate(u.Mutation())
+        return u
     }
     
-    func (uo *{{ .Name }}UpdateOne) SetInput(i *{{ .Name }}UpdateInput) {
+    func (uo *{{ .Name }}UpdateOne) SetInput(i *{{ .Name }}UpdateInput) uo *{{ .Name }}UpdateOne {
         i.Mutate(uo.Mutation())
+        return uo
     }
 {{ end }}
