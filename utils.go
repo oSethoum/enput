@@ -3,6 +3,7 @@ package enput
 import (
 	"bytes"
 	"log"
+	"strings"
 	"text/template"
 
 	"entgo.io/ent/entc/gen"
@@ -28,6 +29,15 @@ func parseTemplate(name string, data any) string {
 func in[T Comparable](v T, vs []T) bool {
 	for _, v2 := range vs {
 		if v == v2 {
+			return true
+		}
+	}
+	return false
+}
+
+func has_prefixes(s string, px []string) bool {
+	for _, p := range px {
+		if strings.HasPrefix(s, p) {
 			return true
 		}
 	}

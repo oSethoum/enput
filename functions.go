@@ -21,6 +21,8 @@ func init() {
 	gen.Funcs["null_field_update"] = null_field_update
 	gen.Funcs["extract_type"] = extract_type
 	gen.Funcs["edge_field"] = edge_field
+	gen.Funcs["comparable"] = comparable
+	gen.Funcs["enum_or_edge_filed"] = enum_or_edge_filed
 }
 
 func tag(f *load.Field) string {
@@ -66,4 +68,22 @@ func extract_type(field *load.Field) string {
 
 func edge_field(e *load.Edge) bool {
 	return e.Field != ""
+}
+
+func comparable(f *load.Field) bool {
+	return has_prefixes(extract_type(f), []string{
+		"string",
+		"int",
+		"uint",
+		"float",
+	})
+}
+
+func enum_or_edge_filed(s *load.Schema, f *load.Field) bool {
+	for _, e := range s.Edges {
+		if e.Field == f.Name {
+			return extract_type(f) == "enum"
+		}
+	}
+	return false
 }

@@ -17,7 +17,6 @@ import (
         {{- range .Fields }}
             {{ pascal .Name }} {{ if null_field_create . -}}*{{- end -}}{{ extract_type . }} `{{ tag . }}`
         {{- end }}
-        
         {{- range .Edges }}
             {{- if edge_field . | not }}
                 {{- if .Unique}}
@@ -32,6 +31,7 @@ import (
             {{- end }}
         {{- end -}}
     }
+
     func (i *{{ .Name }}CreateInput) Mutate(m *{{ .Name }}Mutation) {
         {{- range .Fields }}
             {{- if null_field_create .}} 
@@ -58,6 +58,7 @@ import (
             {{- end }}
         {{- end}}
     }
+
     func (c *{{ .Name }}Create) SetInput(i *{{ .Name }}CreateInput) {
         i.Mutate(c.Mutation())
     }
@@ -85,6 +86,7 @@ import (
         {{- end }}
     {{- end}}
     }
+
     func (i *{{ .Name }}UpdateInput) Mutate(m *{{ .Name }}Mutation) {
     {{- range .Fields }}
         {{- if null_field_update .}} 
@@ -120,9 +122,11 @@ import (
         {{- end }}
     {{- end}}
     }
+
     func (u *{{ .Name }}Update) SetInput(i *{{ .Name }}UpdateInput) {
         i.Mutate(u.Mutation())
     }
+    
     func (uo *{{ .Name }}UpdateOne) SetInput(i *{{ .Name }}UpdateInput) {
         i.Mutate(uo.Mutation())
     }

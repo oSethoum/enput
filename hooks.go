@@ -16,6 +16,12 @@ func (e *extension) generate(next gen.Generator) gen.Generator {
 		if err != nil {
 			log.Fatalln(err)
 		}
+
+		s = parseTemplate("query", g)
+		err = os.WriteFile(path.Join(g.Target, "enput_query.go"), []byte(s), 0666)
+		if err != nil {
+			log.Fatalln(err)
+		}
 		return next.Generate(g)
 	})
 }
