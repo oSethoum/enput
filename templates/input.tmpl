@@ -1,8 +1,9 @@
 package ent
 
+{{ $g := .}}
+
 {{ $imps := imports .}}
 {{ $imps_len := len $imps }}
-{{ $g := .}}
 
 {{- if gt $imps_len 0 }}
 import (

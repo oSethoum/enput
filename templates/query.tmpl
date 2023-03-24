@@ -1,12 +1,15 @@
 package ent
-
-{{ $g := . }}
+{{- $g := . }}
+{{- $imps := imports .}}
 
 import (
     "fmt"
     "strings"
     "errors"
     "{{ .Package }}/predicate"
+    {{- range $imps}}
+    "{{ . }}"
+    {{- end }}
     {{- range .Schemas}}
     "{{ $g.Package }}/{{ lower .Name}}"
     {{- end}}
