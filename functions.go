@@ -76,6 +76,7 @@ func comparable(f *load.Field) bool {
 		"int",
 		"uint",
 		"float",
+		"time.Time",
 	})
 }
 

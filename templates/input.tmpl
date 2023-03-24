@@ -59,7 +59,7 @@ import (
         {{- end}}
     }
 
-    func (c *{{ .Name }}Create) SetInput(i *{{ .Name }}CreateInput) c *{{ .Name }}Create {
+    func (c *{{ .Name }}Create) SetInput(i *{{ .Name }}CreateInput) *{{ .Name }}Create {
         i.Mutate(c.Mutation())
         return c
     }
@@ -129,7 +129,7 @@ import (
         return u
     }
     
-    func (uo *{{ .Name }}UpdateOne) SetInput(i *{{ .Name }}UpdateInput) uo *{{ .Name }}UpdateOne {
+    func (uo *{{ .Name }}UpdateOne) SetInput(i *{{ .Name }}UpdateInput) *{{ .Name }}UpdateOne {
         i.Mutate(uo.Mutation())
         return uo
     }
