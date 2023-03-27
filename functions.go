@@ -33,7 +33,7 @@ func tag(f *load.Field) string {
 			name = strings.TrimSuffix(name, "ID")
 			name += "Id"
 		}
-		return fmt.Sprintf("json:\"%s\"", name)
+		return fmt.Sprintf("json:\"%s,omitempty\"", name)
 	}
 	return f.Tag
 }

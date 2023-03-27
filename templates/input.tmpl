@@ -22,12 +22,12 @@ import (
             {{- if edge_field . | not }}
                 {{- if .Unique}}
                     {{- if .Required }}
-                        {{ pascal .Name }}ID {{ $g.Config.IDType }} `json:"{{ camel .Name }}Id"`
+                        {{ pascal .Name }}ID {{ $g.Config.IDType }} `json:"{{ camel .Name }}Id,omitempty"`
                     {{- else}}
-                        {{ pascal .Name }}ID *{{ $g.Config.IDType }} `json:"{{ camel .Name }}Id"`
+                        {{ pascal .Name }}ID *{{ $g.Config.IDType }} `json:"{{ camel .Name }}Id,omitempty"`
                     {{- end}}
                 {{- else}}
-                    Add{{ pascal .Name }}IDs []{{ $g.Config.IDType }} `json:"add{{pascal .Name}}Ids"`
+                    Add{{ pascal .Name }}IDs []{{ $g.Config.IDType }} `json:"add{{pascal .Name}}Ids,omitempty"`
                 {{- end }}
             {{- end }}
         {{- end -}}
@@ -73,16 +73,16 @@ import (
         {{- if edge_field . | not }}
             {{- if .Unique}}
                 {{- if .Required }}
-                    {{ pascal .Name }}ID {{ $g.Config.IDType }} `json:"{{ camel .Name }}Id"`
+                    {{ pascal .Name }}ID {{ $g.Config.IDType }} `json:"{{ camel .Name }}Id,omitempty"`
                 {{- else }}
-                    {{ pascal .Name }}ID *{{ $g.Config.IDType }} `json:"{{ camel .Name }}Id"`
-                    Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }}"`
+                    {{ pascal .Name }}ID *{{ $g.Config.IDType }} `json:"{{ camel .Name }}Id,omitempty"`
+                    Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }},omitempty"`
                 {{- end }}
             {{- else }}
-                Add{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `json:"{{ singular .Name | camel }}Ids"`
+                Add{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `json:"{{ singular .Name | camel }}Ids,omitempty"`
                 {{- if not .Required }}
-                    Remove{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `json:"remove{{ singular .Name | pascal }}Ids"`
-                    Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }}"`
+                    Remove{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `json:"remove{{ singular .Name | pascal }}Ids,omitempty"`
+                    Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }},omitempty"`
                 {{- end }}
             {{- end}}
         {{- end }}
