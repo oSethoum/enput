@@ -2,6 +2,7 @@ package enput
 
 import (
 	"fmt"
+	"path"
 	"strings"
 
 	"entgo.io/ent/entc/gen"
@@ -37,10 +38,14 @@ func tag(f *load.Field) string {
 	return f.Tag
 }
 
-func imports(g *gen.Graph) []string {
+func imports(g *gen.Graph, isInput ...bool) []string {
 	imps := []string{}
+
 	for _, s := range g.Schemas {
 		for _, f := range s.Fields {
+			if len(f.Enums) > 0 && len(isInput) > 0 && isInput[0] {
+				imps = append(imps, path.Join(g.Package, strings.Split(f.Info.Ident, ".")[0]))
+			}
 			if f.Info != nil && len(f.Info.PkgPath) != 0 {
 				if !in(f.Info.PkgPath, imps) {
 					imps = append(imps, f.Info.PkgPath)
