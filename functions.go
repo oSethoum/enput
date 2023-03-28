@@ -22,7 +22,7 @@ func init() {
 	gen.Funcs["null_field_update"] = null_field_update
 	gen.Funcs["extract_type"] = extract_type
 	gen.Funcs["edge_field"] = edge_field
-	gen.Funcs["comparable"] = comparable
+	gen.Funcs["is_comparable"] = is_comparable
 	gen.Funcs["enum_or_edge_filed"] = enum_or_edge_filed
 }
 
@@ -75,7 +75,7 @@ func edge_field(e *load.Edge) bool {
 	return e.Field != ""
 }
 
-func comparable(f *load.Field) bool {
+func is_comparable(f *load.Field) bool {
 	return has_prefixes(extract_type(f), []string{
 		"string",
 		"int",

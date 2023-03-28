@@ -26,7 +26,7 @@ func parseTemplate(name string, data any) string {
 	return out.String()
 }
 
-func in[T Comparable](v T, vs []T) bool {
+func in[T comparable](v T, vs []T) bool {
 	for _, v2 := range vs {
 		if v == v2 {
 			return true

@@ -10,4 +10,4 @@ type extension struct {
 	hooks []gen.Hook
 }
 
-type Comparable interface{ ~string | ~int | ~float32 }
+type comparable interface{ ~string | ~int | ~float32 }

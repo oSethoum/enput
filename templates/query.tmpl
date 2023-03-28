@@ -42,7 +42,7 @@ type OrderField struct {
                 {{ pascal .Name }}EQ  *{{ extract_type . }}  `json:"{{ camel .Name }}EQ,omitempty"`
                 {{ pascal .Name }}NEQ *{{ extract_type . }}  `json:"{{ camel .Name }}NEQ,omitempty"`
             {{- end }}
-            {{- if comparable . }}
+            {{- if is_comparable . }}
                 {{ pascal .Name }}      *{{ extract_type . }}  `json:"{{ camel .Name }},omitempty"`
                 {{ pascal .Name }}NEQ   *{{ extract_type . }}  `json:"{{ camel .Name }}NEQ,omitempty"`
                 {{ pascal .Name }}In    []{{ extract_type . }} `json:"{{ camel .Name }}In,omitempty"`
@@ -136,7 +136,7 @@ type OrderField struct {
                 predicates = append(predicates, {{ lower $s.Name }}.{{ pascal .Name }}EQ(*v))
             }
             {{- end }}
-            {{- if comparable . }}
+            {{- if is_comparable . }}
                 if v := i.{{ pascal .Name }}; v != nil {
                 predicates = append(predicates, {{ lower $s.Name }}.{{ pascal .Name }}EQ(*v))
                 } 
