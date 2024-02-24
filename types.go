@@ -1,4 +1,4 @@
-package entify
+package enput
 
 import (
 	"entgo.io/ent/entc"

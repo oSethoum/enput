@@ -1,4 +1,4 @@
-package entify
+package enput
 
 func WithConfig(config *Config) option {
 	return func(e *Extension) {

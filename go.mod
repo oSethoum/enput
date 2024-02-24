@@ -1,4 +1,4 @@
-module github.com/oSethoum/entify
+module github.com/oSethoum/enput
 
 go 1.21.5
 

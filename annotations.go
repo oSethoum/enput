@@ -1,5 +1,0 @@
-package entify
-
-func FieldAnnotation() {
-
-}
