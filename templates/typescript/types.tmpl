@@ -1,0 +1,155 @@
+{{ $g := . }}
+
+type OrderDirection = "ASC" | "DESC";
+{{ range $s := .Schemas }}
+
+export interface {{ pascal .Name }} {
+    {{ range .Fields }}
+    {{ if gt (len .Comment) 0 -}} 
+    /** {{ .Comment }} */
+    {{ end -}}
+        {{ get_name . }}{{- if or .Optional .Nillable }}?{{- end}}: {{ get_type . }};
+    {{- end}}
+    {{- $ed := len .Edges }}
+    {{- if gt $ed 0 }}
+    edges:{
+    {{- range .Edges }}
+        {{ case .Name }}?: {{ pascal .Type }} {{- if not .Unique}}[]{{- end}};
+    {{- end}}
+    }
+    {{- end}}
+}
+
+export interface {{ pascal .Name }}CreateInput{
+    {{ range .Fields }}
+    {{ if gt (len .Comment) 0 -}} 
+    /** {{ .Comment }} */
+    {{ end -}}
+        {{ get_name . }}{{- if or .Optional .Nillable .Default }}?{{- end}}: {{ get_type . }};
+    {{- end}}
+    
+    {{ range .Edges -}}
+        {{ if gt (len .Comment) 0 -}} 
+        /** {{ .Comment }} */
+        {{ end -}}
+        {{- if edge_field . | not -}}
+            {{ if .Unique -}}
+                {{ case ( printf "%sId" (pascal .Name) ) }}{{- if not .Required}}?{{- end}}: {{ get_type_info $g.IDType }};
+            {{ else -}}
+                {{ case ( printf "add%sIds" (pascal .Name) ) }}?: {{ get_type_info $g.IDType }}[];
+            {{ end  -}}
+        {{ end -}}
+    {{ end -}}
+}
+
+export interface {{ pascal .Name }}UpdateInput{
+    {{ range .Fields -}}
+        {{ if gt (len .Comment) 0 -}} 
+        /** {{ .Comment }} */
+        {{ end -}}
+        {{ get_name . }}?: {{ get_type . }};
+    {{ end -}}
+    {{ range .Edges -}}
+        {{ if gt (len .Comment) 0 -}} 
+        /** {{ .Comment }} */
+        {{ end -}}
+        {{- if edge_field . | not -}}
+            {{ if .Unique -}}
+                {{ case ( printf "%sId" (pascal .Name) ) }}?: {{ get_type_info $g.IDType }};
+            {{ else -}}
+                {{ case ( printf "add%sIds" (pascal .Name) ) }}?: {{ id_type $s }}[];
+                {{ case ( printf "remove%sIds" (pascal .Name) ) }}?: {{ id_type $s }}[];
+                {{ case ( printf "clear%s" (pascal .Name) ) }}?: boolean;
+            {{ end -}}
+        {{ end -}}
+    {{ end -}}
+}
+
+type {{ pascal .Name }}OrderField = {{ order_fields . }}
+type {{ pascal .Name }}SelectField = {{ select_fields . }}
+type {{ pascal .Name }}AggregateField = {{ aggregate_fields . }}
+type {{ pascal .Name }}GroupByField = {{ group_by_fields . }}
+
+export interface {{ pascal .Name }}Order {
+    field: {{ pascal .Name }}OrderField;
+    direction?: OrderDirection;
+}
+
+export interface {{ pascal .Name }}QueryInput {
+    select?: {{ pascal .Name }}SelectField[];
+    offset?: number;
+    limit?: number;
+    where?: {{ pascal .Name }}WhereInput;
+    order?: {{ pascal .Name }}Order[];
+    {{ range .Edges -}}
+    {{ case (printf "with%s" ( pascal .Name )) }}?: {{ pascal .Type }}QueryInput;
+    {{ with .Through }} 
+    {{ case (printf "with%s" ( pascal .N )) }}?: {{ pascal .T }}QueryInput;
+    {{ end -}}
+    {{ end -}}
+}
+
+export interface {{ pascal .Name }}AggregateInput {
+    field: {{ pascal .Name }}AggregateField;
+    functions: Array<"min" | "max" | "sum" | "avg" | "count">;
+    where?: {{ pascal .Name }}WhereInput;
+    {{ case "group_by" }}?: Array<{{ pascal .Name }}GroupByField>;
+}
+
+export interface {{ pascal .Name }}WhereInput {
+    not?: {{ pascal .Name }}WhereInput;  
+    or?: {{ pascal .Name }}WhereInput[];
+    and?: {{ pascal .Name }}WhereInput[];
+    
+    {{- range .Fields }}
+        {{- if gt (len .Enums) 0 -}}
+            {{ case .Name }}_EQ?:  {{ get_type . }};
+            {{ case .Name }}_NEQ?: {{ get_type . }};
+            {{ case .Name }}_In?: ({{ get_type . }})[];
+            {{ case .Name }}_NotIn?: ({{ get_type . }})[];
+        {{- end -}}
+        {{- if get_type . | eq "boolean" }}
+            {{ case .Name }}_EQ?:  {{ get_type . }};
+            {{ case .Name }}_NEQ?: {{ get_type . }}; 
+        {{- end }}
+        {{- if is_comparable . }}
+            {{ case .Name }}?: {{ get_type . }};
+            {{ case .Name }}_NEQ?: {{ get_type . }} 
+            {{ case .Name }}_In?: {{ get_type . }}[];
+            {{ case .Name }}_NotIn?: {{ get_type . }}[];
+            
+            {{- if enum_or_edge_filed $s . | not }}
+                {{ case .Name }}_GT?: {{ get_type . }};
+                {{ case .Name }}_GTE?: {{ get_type . }};
+                {{ case .Name }}_LT?: {{ get_type . }};
+                {{ case .Name }}_LTE?: {{ get_type . }};
+            {{- end }}
+        {{- end }}
+        {{- if .Optional }}
+            {{ case .Name }}_IsNil?: boolean; 
+            {{ case .Name }}_NotNil?: boolean;
+        {{- end }}
+        {{- if eq .Name "id" | not }}
+            {{- if get_type . | eq "string"}}
+                {{ case .Name }}_Contains?: string; 
+                {{ case .Name }}_HasPrefix?: string; 
+                {{ case .Name }}_HasSuffix?: string; 
+                {{ case .Name }}_ContainsFold?: string; 
+                {{ case .Name }}_EqualFold?: string; 
+            {{- end }}
+        {{- end }}
+    {{- end }}
+    {{- range .Edges}}
+        // "{{.Name}}" edge predicates.
+        {{ case (printf "has%s" (pascal .Name)) }}?: boolean;		               
+        {{ case (printf "has%sWith" (pascal .Name)) }}?: {{pascal .Type}}WhereInput;
+        {{ with .Through }}
+        // "{{.N}}" edge predicates.
+        {{ case (printf "has%s" (pascal .N)) }}?: boolean;		               
+        {{ case (printf "has%sWith" (pascal .N)) }}?: {{pascal .T}}WhereInput;
+        {{ end -}}
+    {{- end}}
+}
+{{- end }}
+
+export type ID = string;

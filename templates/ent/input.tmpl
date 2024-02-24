@@ -2,7 +2,7 @@ package ent
 
 {{ $g := .}}
 
-{{ $imps := imports . true }}
+{{ $imps := imports .Graph true }}
 {{ $imps_len := len $imps }}
 
 {{- if gt $imps_len 0 }}
@@ -12,6 +12,7 @@ import (
     {{ end }}
 )
 {{- end}}
+    
 
 {{- range .Schemas }}
     type {{ .Name }}CreateInput struct {
@@ -22,12 +23,12 @@ import (
             {{- if edge_field . | not }}
                 {{- if .Unique}}
                     {{- if .Required }}
-                        {{ pascal .Name }}ID {{ $g.Config.IDType }} `json:"{{ camel .Name }}Id,omitempty"`
+                        {{ pascal .Name }}ID {{ $g.IDType }} `{{ unique_edge_tag .Name }}`
                     {{- else}}
-                        {{ pascal .Name }}ID *{{ $g.Config.IDType }} `json:"{{ camel .Name }}Id,omitempty"`
+                        {{ pascal .Name }}ID *{{ $g.IDType }} `{{ unique_edge_tag .Name }}`
                     {{- end}}
                 {{- else}}
-                    Add{{ pascal .Name }}IDs []{{ $g.Config.IDType }} `json:"add{{pascal .Name}}Ids,omitempty"`
+                    Add{{ pascal .Name }}IDs []{{ $g.IDType }} `{{ add_ids_tag .Name }}`
                 {{- end }}
             {{- end }}
         {{- end -}}
@@ -64,7 +65,7 @@ import (
         i.Mutate(c.Mutation())
         return c
     }
-
+    
     type {{ .Name }}UpdateInput struct {
         {{- range .Fields }}
             {{ pascal .Name }} {{ if null_field_update . -}}*{{- end -}} {{ extract_type . }} `{{ tag . }}`
@@ -72,17 +73,15 @@ import (
         {{- range .Edges }}
         {{- if edge_field . | not }}
             {{- if .Unique}}
-                {{- if .Required }}
-                    {{ pascal .Name }}ID {{ $g.Config.IDType }} `json:"{{ camel .Name }}Id,omitempty"`
-                {{- else }}
-                    {{ pascal .Name }}ID *{{ $g.Config.IDType }} `json:"{{ camel .Name }}Id,omitempty"`
+                {{ pascal .Name }}ID *{{ $g.IDType }} `json:"{{ case .Name }}Id,omitempty"`
+                {{- if .Required | not}}
                     Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }},omitempty"`
                 {{- end }}
             {{- else }}
-                Add{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `json:"{{ singular .Name | camel }}Ids,omitempty"`
+                Add{{ singular .Name | pascal }}IDs []{{ $g.IDType }} `{{ add_ids_tag .Name }}`
                 {{- if not .Required }}
-                    Remove{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `json:"remove{{ singular .Name | pascal }}Ids,omitempty"`
-                    Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }},omitempty"`
+                    Remove{{ singular .Name | pascal }}IDs []{{ $g.IDType }} `{{ remove_ids_tag .Name }}`
+                    Clear{{ pascal .Name }} bool `{{ clear_tag .Name }}`
                 {{- end }}
             {{- end}}
         {{- end }}
@@ -95,19 +94,21 @@ import (
         if v := i.{{ pascal .Name }}; v != nil {
         m.Set{{pascal .Name}}(*v)
         }
-        {{- else }}
+        {{ else if is_slice . }}
+        if i.{{ pascal .Name }} != nil {
+            m.Set{{pascal .Name}}(i.{{ pascal .Name }})
+        }
+        {{ else -}}
         m.Set{{pascal .Name}}(i.{{ pascal .Name }})
         {{- end }}
     {{- end -}}
     {{- range .Edges}}
         {{- if edge_field . | not }}
             {{- if .Unique}}
-                {{- if .Required }}
-                    m.Set{{ pascal .Name }}ID(i.{{ pascal .Name }}ID)
-                {{- else }}
-                    if v := i.{{ pascal .Name }}ID; v != nil {
-                        m.Set{{ pascal .Name }}ID(*v)
-                    }
+                if v := i.{{ pascal .Name }}ID; v != nil {
+                    m.Set{{ pascal .Name }}ID(*v)
+                }
+                {{- if .Required | not }}
                     if i.Clear{{ pascal .Name }} {
                         m.Clear{{ pascal .Name }}()
                     }
@@ -134,4 +135,4 @@ import (
         i.Mutate(uo.Mutation())
         return uo
     }
-{{ end }}
+{{- end }}

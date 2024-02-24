@@ -1,35 +1,33 @@
-package enput
+package entify
 
 import (
-	"encoding/json"
-	"log"
-	"os"
 	"path"
 
 	"entgo.io/ent/entc/gen"
 )
 
-func (e *extension) generate(next gen.Generator) gen.Generator {
+func (e *Extension) generate(next gen.Generator) gen.Generator {
 	return gen.GenerateFunc(func(g *gen.Graph) error {
-		s := parseTemplate("input", g)
-		err := os.WriteFile(path.Join(g.Target, "enput_input.go"), []byte(s), 0666)
-		if err != nil {
-			log.Fatalln(err)
+		e.data.Graph = g
+		root := rootDir()
+
+		// backend
+		if in(Input, e.data.Config.Files) {
+			writeFile(path.Join(root, "ent/input.go"), parseTemplate("ent/input", e.data))
 		}
 
-		s = parseTemplate("query", g)
-		err = os.WriteFile(path.Join(g.Target, "enput_query.go"), []byte(s), 0666)
-		if err != nil {
-			log.Fatalln(err)
+		if in(Query, e.data.Config.Files) {
+			writeFile(path.Join(root, "ent/query.go"), parseTemplate("ent/query", e.data))
 		}
-		return next.Generate(g)
-	})
-}
 
-func (e *extension) debug(next gen.Generator) gen.Generator {
-	return gen.GenerateFunc(func(g *gen.Graph) error {
-		b, _ := json.Marshal(g.Schemas)
-		os.WriteFile("debug.json", b, 0666)
+		if in(DartTypes, e.data.Config.Files) {
+			writeFile(path.Join(root, e.data.Config.DartClientPath, "types.dart"), parseTemplate("dart/types", e.data))
+		}
+
+		if in(TsTypes, e.data.Config.Files) {
+			writeFile(path.Join(root, e.data.Config.TsClientPath, "types.ts"), parseTemplate("typescript/types", e.data))
+		}
+
 		return next.Generate(g)
 	})
 }

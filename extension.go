@@ -1,4 +1,4 @@
-package enput
+package entify
 
 import (
 	"embed"
@@ -9,12 +9,18 @@ import (
 //go:embed templates
 var templates embed.FS
 
-func (e *extension) Hooks() []gen.Hook {
+func (e *Extension) Hooks() []gen.Hook {
 	return e.hooks
 }
 
-func NewExtension() *extension {
-	e := new(extension)
-	e.hooks = append(e.hooks, e.debug, e.generate)
+func NewExtension(opts ...option) *Extension {
+	e := new(Extension)
+	for _, opt := range opts {
+		opt(e)
+	}
+
+	initFunctions(e)
+	e.hooks = append(e.hooks, e.generate)
+
 	return e
 }

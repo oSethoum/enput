@@ -1,8 +1,10 @@
-package enput
+package entify
 
 import (
 	"bytes"
 	"log"
+	"os"
+	"path"
 	"strings"
 	"text/template"
 
@@ -42,4 +44,34 @@ func has_prefixes(s string, px []string) bool {
 		}
 	}
 	return false
+}
+
+func writeFile(destination string, content string) {
+	os.MkdirAll(path.Dir(destination), 0777)
+	err := os.WriteFile(destination, []byte(content), 0777)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func catch(err error) {
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func rootDir() string {
+	current, err := os.Getwd()
+	catch(err)
+
+again:
+	_, err = os.Stat(path.Join(current, "go.mod"))
+	if err != nil {
+		current = path.Join(current, "../")
+		if current == "/" {
+			log.Fatalln("go.mod not found")
+		}
+		goto again
+	}
+	return current
 }

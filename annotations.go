@@ -1,0 +1,5 @@
+package entify
+
+func FieldAnnotation() {
+
+}
