@@ -1,0 +1,55 @@
+{{ $g := . -}}
+{{ range $s := .Schemas -}}
+class {{ pascal $s.Name }} {
+    {{ range .Fields -}}
+    {{ if .Sensitive }} {{ continue }} {{ end -}}
+    {{ dart_type . }}{{- if or .Optional .Nillable }}?{{ end }} {{ case .Name }};
+    {{ end -}}
+    {{ pascal $s.Name}}Edges? edges;
+
+    {{ pascal $s.Name }}({
+        {{ range .Fields -}} 
+        {{ if .Sensitive }} {{ continue }} {{ end -}}
+        {{ if (or .Optional .Nillable) | not }}required{{ end }} this.{{ case .Name }},
+        {{ end -}}
+        this.edges,
+    });
+
+    factory {{ pascal $s.Name }}.fromJson(Map<String, dynamic> json){
+        return {{ pascal $s.Name }}(
+            {{ range .Fields -}}
+            {{ if .Sensitive }} {{ continue }} {{ end -}}
+            {{ case .Name }}: json["{{ case .Name }}"],
+            {{ end -}}
+            edges: {{ pascal $s.Name }}Edges.fromJson(json["edges"]),
+        );
+    }
+
+
+}
+
+class {{ pascal $s.Name}}Edges {
+    {{ range .Edges -}}
+    {{ if .Unique }} {{ .Type }} {{ else }} List<{{ .Type }}> {{ end }}? {{ case .Name }};
+    {{ end -}}
+
+     {{ pascal $s.Name }}Edges({
+         {{ range .Edges -}} 
+            this.{{ case .Name }},
+         {{ end -}}
+     });
+
+     factory {{ pascal $s.Name }}Edges.fromJson(Map<String, dynamic> json) {
+        return {{ pascal $s.Name }}Edges(
+         {{ range .Edges -}} 
+            {{ if .Unique }} 
+            {{ case .Name }}: {{ .Type }}.fromJson(json['{{ case .Name }}']),
+            {{ else }}
+            {{ case .Name }}: (json['{{ case .Name }}'] as List<dynamic>).map((item) => {{ .Type }}.fromJson(item)).toList(),
+            {{ end -}}
+         {{ end -}} 
+    );
+  }
+}
+
+{{- end }}

@@ -99,12 +99,53 @@ func initFunctions(e *Extension) {
 		return tag
 	}
 
+	extract_type_info := func(t *field.TypeInfo) string {
+		if t.Ident != "" {
+			return t.Ident
+		}
+		return t.Type.String()
+	}
+
 	uniqueEdgeTag := func(schema string) string {
 		return fmt.Sprintf(`json:"%s"`, caseFunc(fmt.Sprintf("%sId", pascal(schema))))
 	}
 
 	is_json := func(f *load.Field) bool {
 		return f.Info.Type.String() == "json.RawMessage"
+	}
+
+	extract_type := func(f *load.Field) string {
+		return extract_type_info(f.Info)
+	}
+
+	get_type := func(f *load.Field) string {
+		if len(f.Enums) > 0 {
+			enums := []string{}
+			for _, v := range f.Enums {
+				enums = append(enums, "\""+v.V+"\"")
+			}
+			return strings.Join(enums, " | ")
+		} else {
+			s := extract_type(f)
+
+			t := "any"
+			slice := false
+			if strings.HasPrefix(s, "[]") {
+				slice = true
+				s = strings.TrimPrefix(s, "[]")
+			}
+			for k, v := range go_ts {
+				if strings.HasPrefix(s, k) {
+					t = v
+					break
+				}
+			}
+
+			if slice {
+				return t + "[]"
+			}
+			return t
+		}
 	}
 
 	imports_without_json := func(g *gen.Graph, isInput ...bool) []string {
@@ -143,6 +184,36 @@ func initFunctions(e *Extension) {
 		return result
 	}
 
+	edge_id_ts_type := func(e *load.Edge, g *gen.Graph) string {
+
+		for _, s := range g.Schemas {
+			if s.Name == e.Type {
+				for _, f := range s.Fields {
+					if f.Name == "id" {
+						return go_ts[get_type(f)]
+					}
+				}
+			}
+		}
+
+		return "number"
+	}
+
+	edge_id_type := func(e *load.Edge, g *gen.Graph) string {
+
+		for _, s := range g.Schemas {
+			if s.Name == e.Type {
+				for _, f := range s.Fields {
+					if f.Name == "id" {
+						return get_type(f)
+					}
+				}
+			}
+		}
+
+		return "int"
+	}
+
 	imports := func(g *gen.Graph, isInput ...bool) []string {
 		imps := []string{}
 		for _, s := range g.Schemas {
@@ -174,17 +245,6 @@ func initFunctions(e *Extension) {
 		}
 
 		return result
-	}
-
-	extract_type_info := func(t *field.TypeInfo) string {
-		if t.Ident != "" {
-			return t.Ident
-		}
-		return t.Type.String()
-	}
-
-	extract_type := func(f *load.Field) string {
-		return extract_type_info(f.Info)
 	}
 
 	null_field_create := func(f *load.Field) bool {
@@ -258,36 +318,6 @@ func initFunctions(e *Extension) {
 		return t
 	}
 
-	get_type := func(f *load.Field) string {
-		if len(f.Enums) > 0 {
-			enums := []string{}
-			for _, v := range f.Enums {
-				enums = append(enums, "\""+v.V+"\"")
-			}
-			return strings.Join(enums, " | ")
-		} else {
-			s := extract_type(f)
-
-			t := "any"
-			slice := false
-			if strings.HasPrefix(s, "[]") {
-				slice = true
-				s = strings.TrimPrefix(s, "[]")
-			}
-			for k, v := range go_ts {
-				if strings.HasPrefix(s, k) {
-					t = v
-					break
-				}
-			}
-
-			if slice {
-				return t + "[]"
-			}
-			return t
-		}
-	}
-
 	is_slice := func(f *load.Field) bool {
 		return strings.HasSuffix(get_type(f), "[]")
 	}
@@ -354,15 +384,45 @@ func initFunctions(e *Extension) {
 		return "\"" + strings.Join(fields, "\" | \"") + "\""
 	}
 
+	dart_type := func(f *load.Field) string {
+
+		if len(f.Enums) > 0 {
+			return "String"
+		} else {
+			s := extract_type(f)
+
+			t := "any"
+			slice := false
+			if strings.HasPrefix(s, "[]") {
+				slice = true
+				s = strings.TrimPrefix(s, "[]")
+			}
+			for k, v := range go_dart {
+				if strings.HasPrefix(s, k) {
+					t = v
+					break
+				}
+			}
+			if slice {
+				return fmt.Sprintf("List<%s>", t)
+			}
+			return t
+		}
+
+	}
+
 	gen.Funcs["case"] = caseFunc
 	gen.Funcs["camel"] = camel
 	gen.Funcs["tag"] = fieldTag
 	gen.Funcs["imports_without_json"] = imports_without_json
 	gen.Funcs["imports"] = imports
 	gen.Funcs["is_json"] = is_json
+	gen.Funcs["dart_type"] = dart_type
 	gen.Funcs["null_field_create"] = null_field_create
 	gen.Funcs["null_field_update"] = null_field_update
 	gen.Funcs["extract_type"] = extract_type
+	gen.Funcs["edge_id_type"] = edge_id_type
+	gen.Funcs["edge_id_ts_type"] = edge_id_ts_type
 	gen.Funcs["extract_type_info"] = extract_type_info
 	gen.Funcs["edge_field"] = edge_field
 	gen.Funcs["is_comparable"] = is_comparable

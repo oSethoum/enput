@@ -23,12 +23,12 @@ import (
             {{- if edge_field . | not }}
                 {{- if .Unique}}
                     {{- if .Required }}
-                        {{ pascal .Name }}ID {{ $g.IDType }} `{{ unique_edge_tag .Name }}`
+                        {{ pascal .Name }}ID {{ edge_id_type . $g.Graph }} `{{ unique_edge_tag .Name }}`
                     {{- else}}
-                        {{ pascal .Name }}ID *{{ $g.IDType }} `{{ unique_edge_tag .Name }}`
+                        {{ pascal .Name }}ID *{{ edge_id_type . $g.Graph }} `{{ unique_edge_tag .Name }}`
                     {{- end}}
                 {{- else}}
-                    Add{{ pascal .Name }}IDs []{{ $g.IDType }} `{{ add_ids_tag .Name }}`
+                    Add{{ pascal .Name }}IDs []{{ edge_id_type . $g.Graph }} `{{ add_ids_tag .Name }}`
                 {{- end }}
             {{- end }}
         {{- end -}}
@@ -73,14 +73,14 @@ import (
         {{- range .Edges }}
         {{- if edge_field . | not }}
             {{- if .Unique}}
-                {{ pascal .Name }}ID *{{ $g.IDType }} `json:"{{ case .Name }}Id,omitempty"`
+                {{ pascal .Name }}ID *{{ edge_id_type . $g.Graph }} `json:"{{ case .Name }}Id,omitempty"`
                 {{- if .Required | not}}
                     Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }},omitempty"`
                 {{- end }}
             {{- else }}
-                Add{{ singular .Name | pascal }}IDs []{{ $g.IDType }} `{{ add_ids_tag .Name }}`
+                Add{{ singular .Name | pascal }}IDs []{{ edge_id_type . $g.Graph }} `{{ add_ids_tag .Name }}`
                 {{- if not .Required }}
-                    Remove{{ singular .Name | pascal }}IDs []{{ $g.IDType }} `{{ remove_ids_tag .Name }}`
+                    Remove{{ singular .Name | pascal }}IDs []{{ edge_id_type . $g.Graph }} `{{ remove_ids_tag .Name }}`
                     Clear{{ pascal .Name }} bool `{{ clear_tag .Name }}`
                 {{- end }}
             {{- end}}

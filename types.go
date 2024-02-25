@@ -64,3 +64,16 @@ var go_ts = map[string]string{
 	"other":     "any",
 	"json":      "any",
 }
+
+var go_dart = map[string]string{
+	"time.Time": "String",
+	"int":       "int",
+	"bool":      "bool",
+	"uint":      "int",
+	"float":     "double",
+	"enum":      "String",
+	"string":    "String",
+	"any":       "Map<String, dynamic>",
+	"other":     "Map<String, dynamic>",
+	"json":      "Map<String, dynamic>",
+}
