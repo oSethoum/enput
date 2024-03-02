@@ -78,7 +78,7 @@ import (
     
     type {{ .Name }}UpdateInput struct {
         {{- range .Fields }}
-            {{ pascal .Name }} {{ if not .Slice -}}*{{- end -}} {{ .Type }} `{{ .Tag }}`
+            {{ pascal .Name }} {{ if and ( not .Slice ) ( not ( eq .Name "id" ) )  -}}*{{- end -}} {{ .Type }} `{{ .Tag }}`
         {{- end }}
         {{- range .Edges }}
             {{ if not .EdgeField }}
@@ -97,11 +97,21 @@ import (
             {{ end -}}
         {{- end }}
 
+        UpdateEdges *{{ .Name }}UpdateEdges `json:"{{case "UpdateEdges"}},omitempty"`
+
     } {{ if $g.Config.WithSwaggerRename }}// @name {{ .Name }}UpdateInput {{ end }}
+
+    type {{ .Name }}UpdateEdges struct {
+        {{- range .Edges }}
+            {{- if .Unique}}
+                {{ pascal .Name }} *{{ pascal .Type }}UpdateInput `json:"{{ case .Name }},omitempty"`
+            {{- end }}
+        {{- end -}}
+    } {{ if $g.Config.WithSwaggerRename }}// @name {{ .Name }}UpdateEdges {{ end }}
 
     func (i *{{ .Name }}UpdateInput) Mutate(m *{{ .Name }}Mutation) {
     {{- range .Fields }}
-        {{- if not .Slice }} 
+        {{- if and ( not .Slice ) ( not ( eq .Name "id" ) )  }}
         if v := i.{{ pascal .Name }}; v != nil {
         m.Set{{pascal .Name}}(*v)
         }

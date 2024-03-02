@@ -20,52 +20,86 @@ func NewMutator(ctx context.Context, client *ent.Client) *Mutator {
 {{ range .Schemas }}
 {{ $s := . }}
 func  (m *Mutator)Create{{ pascal .Name }}(input *ent.{{ pascal .Name }}CreateInput) (*ent.{{ pascal .Name }}, error) {
-	if input.CreateEdges == nil {
-        return m.client.{{ pascal .Name }}.Create().SetInput(input).Save(m.ctx)
-    } else {
-        edges := ent.{{ pascal .Name }}Edges{}
-        {{ range  .Edges }}
-            {{ if .Unique }}
-                {{ if is_key_holder . | not }}
+    {{ if gt ( len .Edges ) 0 }} 
+        if input.CreateEdges == nil {
+            return m.client.{{ pascal .Name }}.Create().SetInput(input).Save(m.ctx)
+        } else {
+            edges := ent.{{ pascal .Name }}Edges{}
+            {{ range  .Edges }}
+                {{ if .Unique }}
+                    {{ if .OwnerFK }}
+                        if input.CreateEdges.{{ pascal .Name }} != nil {
+                            {{ snake .Name }}, err := m.Create{{ .Type }}(input.CreateEdges.{{ pascal .Name }})
+                            if err != nil {
+                                return nil, err
+                            }
+                            {{ if .Optional  -}} 
+                            input.{{ pascal .Field }} = &{{ snake .Name }}.ID
+                            {{ else }}
+                            input.{{ pascal .Field }} = {{ snake .Name }}.ID
+                            {{ end }}
+                            edges.{{ pascal .Name }} = {{ snake .Name }}
+                        }
+                    {{ end -}}
+                {{ end -}} 
+            {{ end -}}
+
+            {{ snake .Name }}, err := m.client.{{ pascal .Name }}.Create().SetInput(input).Save(m.ctx)
+
+            {{ range  .Edges }}
+                {{ if .Unique }}
+                    {{ if not .OwnerFK }}
                     if input.CreateEdges.{{ pascal .Name }} != nil {
+                        input.CreateEdges.{{ pascal .Name }}.{{ pascal .Field }} = {{ snake $s.Name }}.ID
                         {{ snake .Name }}, err := m.Create{{ .Type }}(input.CreateEdges.{{ pascal .Name }})
                         if err != nil {
                             return nil, err
                         }
-                        {{ if .Required -}} 
-                        input.{{ pascal .Field }} = {{ snake .Name }}.ID
-                        {{ else }}
-                        input.{{ pascal .Field }} = &{{ snake .Name }}.ID
-                        {{ end }}
+                        edges.{{ pascal .Name }} = {{ snake .Name }}
+                    }
+                    {{ end -}} 
+                {{ end -}}
+            {{ end -}}
+
+
+            if err != nil {
+                return nil, err
+            }
+            {{ snake .Name }}.Edges = edges
+            return {{ snake .Name }}, nil
+        }
+    {{ else }} 
+        return m.client.{{ pascal .Name }}.Create().SetInput(input).Save(m.ctx)
+    {{ end }}
+}
+
+func  (m *Mutator)Update{{ pascal .Name }}(input *ent.{{ pascal .Name }}UpdateInput) (*ent.{{ pascal .Name }}, error) {
+    {{ if gt ( len .Edges ) 0 }} 
+        if input.UpdateEdges == nil {
+            return m.client.{{ pascal .Name }}.UpdateOneID(input.ID).SetInput(input).Save(m.ctx)
+        } else {
+            edges := ent.{{ pascal .Name }}Edges{}
+            {{ range  .Edges }}
+                {{ if .Unique }}
+                    if input.UpdateEdges.{{ pascal .Name }} != nil {
+                        {{ snake .Name }}, err := m.Update{{ .Type }}(input.UpdateEdges.{{ pascal .Name }})
+                        if err != nil {
+                            return nil, err
+                        }
                         edges.{{ pascal .Name }} = {{ snake .Name }}
                     }
                 {{ end -}}
-            {{ end -}} 
-        {{ end -}}
-
-        {{ snake .Name }}, err := m.client.{{ pascal .Name }}.Create().SetInput(input).Save(m.ctx)
-
-        {{ range  .Edges }}
-            {{ if .Unique }}
-                {{ if is_key_holder . | not }}
-                if input.CreateEdges.{{ pascal .Name }} != nil {
-                    input.CreateEdges.{{ pascal .Name }}.{{ pascal .Field }} = {{ snake $s.Name }}
-                    {{ snake .Name }}, err := m.Create{{ .Type }}(input.CreateEdges.{{ pascal .Name }})
-                    if err != nil {
-                        return nil, err
-                    }
-                    edges.{{ pascal .Name }} = {{ snake .Name }}
-                }
-                {{ end -}} 
             {{ end -}}
-        {{ end -}}
-
-
-        if err != nil {
-            return nil, err
+            {{ snake .Name }}, err := m.client.{{ pascal .Name }}.UpdateOneID(input.ID).SetInput(input).Save(m.ctx)
+            if err != nil {
+                return nil, err
+            }
+            {{ snake .Name }}.Edges = edges
+            return {{ snake .Name }}, nil
         }
-        {{ snake .Name }}.Edges = edges
-        return {{ snake .Name }}, nil
-    }
+    {{ else }} 
+        return m.client.{{ pascal .Name }}.UpdateOneID(input.ID).SetInput(input).Save(m.ctx)
+    {{ end }}
 }
+
 {{ end -}}

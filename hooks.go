@@ -34,10 +34,6 @@ func (e *Extension) generate(next gen.Generator) gen.Generator {
 			writeFile(path.Join(root, "handlers/queries.go"), parseTemplate("fiber/queries", e.data))
 		}
 
-		if in(Mutations, e.data.Config.Files) {
-			writeFile(path.Join(root, "handlers/mutations.go"), parseTemplate("fiber/mutations", e.data))
-		}
-
 		if in(RoutesQueries, e.data.Config.Files) {
 			writeFile(path.Join(root, "routes/queries.go"), parseTemplate("fiber/routes-queries", e.data))
 		}
@@ -58,14 +54,24 @@ func (e *Extension) generate(next gen.Generator) gen.Generator {
 			writeFile(path.Join(root, e.data.Config.TsClientPath, "api.ts"), parseTemplate("typescript/api", e.data))
 		}
 
-		// if in(DartTypes, e.data.Config.Files) {
-		// 	writeFile(path.Join(root, e.data.Config.DartClientPath, "types.dart"), parseTemplate("dart/types", e.data))
-		// }
+		if e.data.Config.WithNestedMutations {
+			if in(Services, e.data.Config.Files) {
+				writeFile(path.Join(root, "services/mutations.go"), parseTemplate("ent/services", e.data))
+			}
 
-		// if in(Mutations, e.data.Config.Files) {
-		// 	writeFile(path.Join(root, "handlers/mutations.go"), parseTemplate("fiber/services-mutations", e.data))
-		// 	writeFile(path.Join(root, "services/mutations.go"), parseTemplate("ent/services", e.data))
-		// }
+			if in(Mutations, e.data.Config.Files) {
+				writeFile(path.Join(root, "handlers/mutations.go"), parseTemplate("fiber/services-mutations", e.data))
+			}
+		} else {
+			if in(Mutations, e.data.Config.Files) {
+				writeFile(path.Join(root, "handlers/mutations.go"), parseTemplate("fiber/mutations", e.data))
+			}
+		}
+
+		if in(DartTypes, e.data.Config.Files) {
+			writeFile(path.Join(root, e.data.Config.DartClientPath, "types.dart"), parseTemplate("dart/types", e.data))
+		}
+
 		return next.Generate(g)
 	})
 }

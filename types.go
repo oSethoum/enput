@@ -29,6 +29,7 @@ const (
 	Mutations
 	RoutesQueries
 	RoutesMutations
+	Services
 )
 
 const (
@@ -132,6 +133,7 @@ type Field struct {
 	HasDefault bool
 	IsJson     bool
 	Comment    string
+	Sensitive  bool
 }
 
 type FieldTypes struct {

@@ -5,6 +5,7 @@ type OrderDirection = "ASC" | "DESC";
 
 export interface {{ pascal .Name }} {
     {{ range .Fields }}
+    {{ if .Sensitive }} {{ continue }} {{ end -}}
     {{ if gt (len .Comment) 0 -}}
     /** {{ .Comment }} */
     {{ end -}}
@@ -22,12 +23,17 @@ export interface {{ pascal .Name }} {
 
 export interface {{ pascal .Name }}CreateInput{
     {{ range .Fields }}
+    {{ if .Sensitive }} {{ continue }} {{ end -}}
     {{ if gt (len .Comment) 0 -}} 
     /** {{ .Comment }} */
     {{ end -}}
+    {{- if and ( .EdgeField ) ( not .Optional ) -}} 
+        /** Required Edge Field */
+        {{ case .Name }}?: {{ .Types.Ts }};
+    {{ else }}
         {{ case .Name }}{{- if or .Optional .Nillable .HasDefault }}?{{- end}}: {{ .Types.Ts }};
-    {{- end}}
-    
+    {{ end -}}
+    {{ end -}}
     {{ range .Edges -}}
         {{ if gt (len .Comment) 0 -}} 
         /** {{ .Comment }} */
@@ -56,10 +62,11 @@ export interface {{ pascal .Name }}CreateEdges {
 
 export interface {{ pascal .Name }}UpdateInput{
     {{ range .Fields -}}
+        {{ if .Sensitive }} {{ continue }} {{ end -}}
         {{ if gt (len .Comment) 0 -}} 
         /** {{ .Comment }} */
         {{ end -}}
-        {{ case .Name }}?: {{ .Types.Ts }};
+        {{ case .Name }}{{ if and ( not .Slice ) ( not ( eq .Name "id" ) ) }}?{{ end -}}: {{ .Types.Ts }};
     {{ end -}}
     {{ range .Edges -}}
         {{ if gt (len .Comment) 0 -}} 
@@ -115,6 +122,7 @@ export interface {{ pascal .Name }}WhereInput {
     and?: {{ pascal .Name }}WhereInput[];
     
     {{- range .Fields }}
+        {{ if .Sensitive }} {{ continue }} {{ end -}}
         {{- if gt (len .Enums) 0 -}}
             {{ case .Name }}_EQ?:  {{ .Types.Ts }};
             {{ case .Name }}_NEQ?: {{ .Types.Ts }};

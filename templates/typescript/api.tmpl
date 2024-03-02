@@ -29,25 +29,25 @@ export function Api(url: string) {
     url = url.replace(/\/+$/, "");
     return {
         {{ range .Schemas }}
-        {{ pascal .Name }}: {
-            Query: async (query?: T.{{ pascal .Name }}QueryInput) =>
-                request<Promise<QueryResponse<T.{{ pascal .Name }}>>>(
+        {{ snake .Name }}: {
+            query: async (query?: T.{{ pascal .Name }}QueryInput) =>
+                request<Promise<QueryResponse<Array<T.{{ pascal .Name }}>>>>(
                     `${url}/{{ plural .Name | kebab }}${
                         query ? `?query=${JSON.stringify(query)}` : ""
                     }`,
                     {}
                 ),
-            Create: async (input: T.{{ pascal .Name }}CreateInput) =>
+            create: async (input: T.{{ pascal .Name }}CreateInput) =>
                 request<Promise<MutationResponse<T.{{ pascal .Name }}>>>(`${url}/{{ plural .Name | kebab }}`, {
                     method: "POST",
                     body: JSON.stringify(input),
                 }),
-            Update: async (input: T.{{ pascal .Name }}UpdateInput) =>
+            update: async (input: T.{{ pascal .Name }}UpdateInput) =>
                 request<Promise<MutationResponse<T.{{ pascal .Name }}>>>(`${url}/{{ plural .Name | kebab }}`, {
                     method: "PATCH",
                     body: JSON.stringify(input),
                 }),
-            Delete: async (id: ID) =>
+            delete: async (id: ID) =>
                 request<Promise<DeleteResponse>>(`${url}/{{ plural .Name | kebab }}/${id}`, {
                     method: "DELETE",
                 }),

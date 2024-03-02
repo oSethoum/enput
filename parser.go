@@ -17,7 +17,9 @@ func (ex *Extension) parse(g *gen.Graph) {
 			Name: n.Name,
 		}
 
-		for _, f := range n.Fields {
+		nFields := append([]*gen.Field{n.ID}, n.Fields...)
+
+		for _, f := range nFields {
 			field := Field{
 				Name:       f.Name,
 				Type:       "any",
@@ -28,6 +30,7 @@ func (ex *Extension) parse(g *gen.Graph) {
 				IsJson:     f.IsBool(),
 				Comment:    f.Comment(),
 				Enum:       f.IsEnum(),
+				Sensitive:  f.Sensitive(),
 			}
 
 			// Slice
@@ -57,6 +60,21 @@ func (ex *Extension) parse(g *gen.Graph) {
 				field.Types.Ts = t
 			}
 
+			// Types.Dart
+			if field.Enum {
+				field.Types.Dart = "String"
+			} else {
+				t := strings.ReplaceAll(field.Type, " ", "")
+				if field.Slice {
+					t = strings.ReplaceAll(t, "[]", "")
+				}
+				t = go_to_dart(t)
+				if field.Slice {
+					t += fmt.Sprintf("List<%s>", t)
+				}
+				field.Types.Dart = t
+			}
+
 			// Enum
 			if field.Enum {
 				for _, enum := range f.Enums {
@@ -67,6 +85,8 @@ func (ex *Extension) parse(g *gen.Graph) {
 				if !in(pkg, ex.data.InputImports) {
 					ex.data.InputImports = append(ex.data.InputImports, pkg)
 				}
+
+				field.Types.Ts = fmt.Sprintf(`"%s"`, strings.Join(field.Enums, `" | "`))
 			}
 
 			// Tags
@@ -94,13 +114,16 @@ func (ex *Extension) parse(g *gen.Graph) {
 				Unique:   e.Unique,
 				Optional: e.Optional,
 				OwnerFK:  e.OwnFK(),
-				Comment:  e.Comment(),
+
+				Comment: e.Comment(),
 			}
 
 			// Field
 			if e.Field() != nil {
 				edge.EdgeField = true
 				edge.Field = e.Field().Name
+			} else if e.Ref != nil && e.Ref.Field() != nil {
+				edge.Field = e.Ref.Field().Name
 			}
 
 			// Tags
@@ -120,7 +143,7 @@ func (ex *Extension) parse(g *gen.Graph) {
 				edge.Tags.AddIdsTag = fmt.Sprintf(`json:"%s"`, add)
 				remove := strCase("Remove" + pascal(e.Name) + "IDs")
 				edge.Tags.RemoveIdsTag = fmt.Sprintf(`json:"%s"`, remove)
-				clear := strCase("Clear" + pascal(e.Name) + "IDs")
+				clear := strCase("Clear" + pascal(e.Name))
 				edge.Tags.ClearTag = fmt.Sprintf(`json:"%s"`, clear)
 			}
 			schema.Edges = append(schema.Edges, edge)

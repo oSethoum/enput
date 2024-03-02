@@ -1,9 +1,10 @@
 {{ $g := . -}}
 {{ range $s := .Schemas -}}
+
 class {{ pascal $s.Name }} {
     {{ range .Fields -}}
     {{ if .Sensitive }} {{ continue }} {{ end -}}
-    {{ dart_type . }}{{- if or .Optional .Nillable }}?{{ end }} {{ case .Name }};
+    {{ .Types.Dart }}{{- if or .Optional .Nillable }}?{{ end }} {{ case .Name }};
     {{ end -}}
     {{ pascal $s.Name}}Edges? edges;
 
@@ -24,8 +25,6 @@ class {{ pascal $s.Name }} {
             edges: {{ pascal $s.Name }}Edges.fromJson(json["edges"]),
         );
     }
-
-
 }
 
 class {{ pascal $s.Name}}Edges {
