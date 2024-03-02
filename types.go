@@ -1,9 +1,10 @@
 package enput
 
 import (
+	"strings"
+
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
-	"entgo.io/ent/entc/load"
 )
 
 type Extension struct {
@@ -18,9 +19,16 @@ type File = uint
 
 const (
 	Input File = iota * 2
+	DB
 	Query
 	DartTypes
 	TsTypes
+	TsApi
+	Swagger
+	Queries
+	Mutations
+	RoutesQueries
+	RoutesMutations
 )
 
 const (
@@ -32,48 +40,121 @@ const (
 type option = func(*Extension)
 
 type data struct {
-	*gen.Graph
-	Config        *Config
-	CurrentSchema *load.Schema
+	Config       *Config
+	Package      string
+	Schemas      []Schema
+	Imports      []string
+	InputImports []string
 }
 
 type Config struct {
-	Case           Case
-	IDType         string
-	TsClientPath   string
-	DartClientPath string
-	Files          []File
-	Package        string
-	IgnoreSchemas  []string
-	FormTag        bool
+	Case                Case
+	IDType              string
+	TsClientPath        string
+	DartClientPath      string
+	Files               []File
+	Package             string
+	IgnoreSchemas       []string
+	FormTag             bool
+	WithSwaggerRename   bool
+	WithNestedMutations bool
+	WithHooks           bool
+	WithInterceptors    bool
+	WithSecurity        bool
 }
 
 type comparable interface {
 	~string | ~int | ~float32 | ~uint
 }
 
-var go_ts = map[string]string{
-	"time.Time": "string",
-	"bool":      "boolean",
-	"int":       "number",
-	"uint":      "number",
-	"float":     "number",
-	"enum":      "string",
-	"string":    "string",
-	"any":       "any",
-	"other":     "any",
-	"json":      "any",
+func go_to_ts(k string) string {
+	if strings.HasPrefix(k, "time.Time") {
+		return "string"
+	}
+	if strings.HasPrefix(k, "bool") {
+		return "boolean"
+	}
+	if strings.HasPrefix(k, "int") {
+		return "number"
+	}
+	if strings.HasPrefix(k, "uint") {
+		return "number"
+	}
+	if strings.HasPrefix(k, "float") {
+		return "number"
+	}
+	if strings.HasPrefix(k, "string") {
+		return "string"
+	}
+	return "any"
 }
 
-var go_dart = map[string]string{
-	"time.Time": "String",
-	"int":       "int",
-	"bool":      "bool",
-	"uint":      "int",
-	"float":     "double",
-	"enum":      "String",
-	"string":    "String",
-	"any":       "Map<String, dynamic>",
-	"other":     "Map<String, dynamic>",
-	"json":      "Map<String, dynamic>",
+func go_to_dart(k string) string {
+	if strings.HasPrefix(k, "time.Time") {
+		return "String"
+	}
+	if strings.HasPrefix(k, "bool") {
+		return "bool"
+	}
+	if strings.HasPrefix(k, "int") {
+		return "int"
+	}
+	if strings.HasPrefix(k, "uint") {
+		return "int"
+	}
+	if strings.HasPrefix(k, "float") {
+		return "double"
+	}
+	if strings.HasPrefix(k, "string") {
+		return "String"
+	}
+	return "Map<String, dynamic>"
+}
+
+type Schema struct {
+	Name    string
+	Imports []string
+	Fields  []Field
+	Edges   []Edge
+}
+
+type Field struct {
+	Name       string
+	Type       string
+	Tag        string
+	Optional   bool
+	Nillable   bool
+	Slice      bool
+	EdgeField  bool
+	Enum       bool
+	Enums      []string
+	Types      FieldTypes
+	HasDefault bool
+	IsJson     bool
+	Comment    string
+}
+
+type FieldTypes struct {
+	Ts   string
+	Dart string
+}
+
+type Edge struct {
+	Name      string
+	Type      string
+	Unique    bool
+	Optional  bool
+	Field     string
+	OwnerFK   bool
+	EdgeField bool
+	Tags      EdgeTags
+	Through   *Edge
+	Comment   string
+}
+
+type EdgeTags struct {
+	UniqueTag    string
+	AddIdsTag    string
+	RemoveIdsTag string
+	ClearTag     string
 }

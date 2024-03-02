@@ -1,0 +1,163 @@
+package handlers
+
+import (
+	"{{ .Config.Package }}/db"
+	"{{ .Config.Package }}/ent"
+	"{{ .Config.Package }}/services"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+{{ range .Schemas }}
+
+// Create{{ pascal .Name }} godoc
+//
+//	@Summary	Create {{ pascal .Name }}
+//	@Tags		{{ plural .Name | kebab }}
+//	@Produce	json
+//	@Param		input	body		{{ pascal .Name }}CreateInput	false	"Body object"
+//	@Success	201		{object}    {{ pascal .Name }}CreateSuccess
+//	@Failure	400		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/{{ plural .Name | kebab }}		[post]
+func Create{{ pascal .Name }}(c *fiber.Ctx) error {
+
+	body := new(ent.{{ pascal .Name }}CreateInput)
+
+	err := c.BodyParser(body)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"ok":    false,
+			"error": err.Error(),
+		})
+	}
+
+    tx, err := db.Client.Tx(c.UserContext())
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"ok":    false,
+			"error": err.Error(),
+		})
+    }
+
+    m := services.NewMutator(c.UserContext(), tx.Client())
+
+	entity, err := m.Create{{ pascal .Name }}(body)
+	if err != nil {
+        rerr := tx.Rollback()
+		if rerr != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"ok":    false,
+				"error": err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"ok":    false,
+			"error": err.Error(),
+		})
+	}
+
+    err = tx.Commit()
+	if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"ok":    false,
+			"error": err.Error(),
+		})
+    }
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"ok":   true,
+		"data": entity,
+	})
+}
+
+// Update{{ pascal .Name }} godoc
+//
+//	@Summary	Update {{ pascal .Name }}
+//	@Tags		{{ plural .Name | kebab }}
+//	@Produce	json
+//	@Param		input	body		SignUpInput	false	"Body object"
+//	@Param		id		path		string		false	"{{ pascal .Name }} ID"
+//	@Success	200		{object}    {{ pascal .Name }}UpdateSuccess
+//	@Failure	400		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/{{ plural .Name | kebab }}/ [patch]
+func Update{{ pascal .Name }}(c *fiber.Ctx) error {
+
+	body := new(ent.{{ pascal .Name }}UpdateInput)
+
+	err := c.BodyParser(body)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"ok":    false,
+			"error": err.Error(),
+		})
+	}
+
+    tx, err := db.Client.Tx(c.UserContext())
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"ok":    false,
+			"error": err.Error(),
+		})
+    }
+
+    m := services.NewMutator(c.UserContext(), tx.Client())
+
+	entity, err := m.Update{{ pascal .Name }}(body)
+	if err != nil {
+        rerr := tx.Rollback()
+		if rerr != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"ok":    false,
+				"error": err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"ok":    false,
+			"error": err.Error(),
+		})
+	}
+
+    err = tx.Commit()
+	if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"ok":    false,
+			"error": err.Error(),
+		})
+    }
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"ok":   true,
+		"data": entity,
+	})
+}
+
+// Delete{{ pascal .Name }} godoc
+//
+//	@Summary	Delete {{ pascal .Name }}
+//	@Tags		{{ plural .Name | kebab }}
+//	@Produce	json
+//	@Param		id	    path		string	   false	"{{ pascal .Name }} ID"
+//	@Success	200		{object}    Success
+//	@Failure	400		{object}	Error
+//	@Failure	500		{object}	Error
+//	@Router		/{{ plural .Name | kebab }}/:id 	[delete]
+func Delete{{ pascal .Name }}(c *fiber.Ctx) error {
+
+	id := c.Params("id")
+
+	err := db.Client.{{ pascal .Name }}.DeleteOneID(id).Exec(c.UserContext())
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"ok":    false,
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"ok": true,
+	})
+}
+{{ end -}}

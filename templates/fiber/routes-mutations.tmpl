@@ -1,0 +1,15 @@
+package routes
+
+import (
+    "{{ .Config.Package }}/handlers"
+
+    "github.com/gofiber/fiber/v2"
+)
+
+func mutations(r fiber.Router) {
+    {{ range .Schemas -}} 
+    r.Post("/{{ plural .Name | kebab }}", handlers.Create{{ pascal .Name }})
+    r.Patch("/{{ plural .Name | kebab }}/:id", handlers.Update{{ pascal .Name }})
+    r.Delete("/{{ plural .Name | kebab }}/:id", handlers.Delete{{ pascal .Name }})
+    {{ end }}
+}

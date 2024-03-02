@@ -1,0 +1,13 @@
+package routes
+
+import (
+    "{{ .Config.Package }}/handlers"
+
+    "github.com/gofiber/fiber/v2"
+)
+
+func queries(r fiber.Router) {
+    {{ range .Schemas -}} 
+    r.Get("/{{ plural .Name | kebab }}", handlers.Query{{ plural .Name | pascal }})
+    {{ end }}
+}

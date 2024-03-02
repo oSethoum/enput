@@ -1,15 +1,13 @@
 package ent
-{{- $g := . }}
-{{- $imps := imports_without_json .Graph}}
-
+{{ $g := . }}
 import (
     "fmt"
     "strings"
     "errors"
-    "{{ .Package }}/predicate"
-    {{- range $imps}}
+    "{{ $g.Package }}/predicate"
+    {{ range .Imports -}}
     "{{ . }}"
-    {{- end }}
+    {{ end -}}
     {{- range .Schemas}}
     "{{ $g.Package }}/{{ lower .Name}}"
     {{- end}}
@@ -21,14 +19,7 @@ type OrderField struct {
 }
 
 {{- range $k, $s := .Schemas }}
-    type {{ pascal .Name }}AggregateInput struct {
-        Field string `json:"field" form:"field"`
-        Functions []string `json:"functions" form:"functions"`
-        GroupBy []string `json:"{{ case "group_by" }}" form:"{{ case "group_by" }}"`
-        Where *{{ pascal .Name }}WhereInput `json:"where,omitempty" form:"where,omitempty"`
-    }
-
-    type {{ pascal .Name }}QueryInput struct {
+     type {{ pascal .Name }}QueryInput struct {
         Select []string 					    `json:"select,omitempty"`
 	    Offset *int     					    `json:"offset,omitempty"`
 	    Limit  *int     					    `json:"limit,omitempty"`
@@ -37,10 +28,10 @@ type OrderField struct {
 	    {{- range .Edges }}
             With{{ pascal .Name }} *{{ pascal .Type }}QueryInput `json:"{{ (printf "with%s,omitempty" (pascal .Name)) | case }}"`
             {{ with .Through }} 
-                With{{ pascal .N }} *{{ pascal .T }}QueryInput `json:"{{ (printf "with%s,omitempty" (pascal .N)) | case }}"`
+                With{{ pascal .Name }} *{{ pascal .Type }}QueryInput `json:"{{ (printf "with%s,omitempty" (pascal .Name)) | case }}"`
             {{ end -}}
         {{- end }}
-    }
+    } {{ if $g.Config.WithSwaggerRename }}// @name {{ $s.Name }}QueryInput {{ end }}
 
     type {{ pascal .Name }}WhereInput struct {
         Not 	*{{ pascal .Name }}WhereInput   `json:"not"`
@@ -49,26 +40,26 @@ type OrderField struct {
 
         {{- range .Fields }}
             {{- if gt (len .Enums) 0  }}
-            {{ pascal .Name }}EQ     *{{ extract_type . }}   `json:"{{ case .Name }}_EQ,omitempty"`
-            {{ pascal .Name }}NEQ    *{{ extract_type . }}   `json:"{{ case .Name }}_NEQ,omitempty"`
-            {{ pascal .Name }}In     []{{ extract_type . }}  `json:"{{ case .Name }}_In,omitempty"`
-            {{ pascal .Name }}NotIn  []{{ extract_type . }}  `json:"{{ case .Name }}_NotIn,omitempty"`
+            {{ pascal .Name }}EQ     *{{ .Type }}   `json:"{{ case .Name }}_EQ,omitempty"`
+            {{ pascal .Name }}NEQ    *{{ .Type }}   `json:"{{ case .Name }}_NEQ,omitempty"`
+            {{ pascal .Name }}In     []{{ .Type }}  `json:"{{ case .Name }}_In,omitempty"`
+            {{ pascal .Name }}NotIn  []{{ .Type }}  `json:"{{ case .Name }}_NotIn,omitempty"`
             {{- end -}}
-            {{- if extract_type . | eq "bool" }}
-                {{ pascal .Name }}EQ  *{{ extract_type . }}  `json:"{{ case .Name }}_EQ,omitempty"`
-                {{ pascal .Name }}NEQ *{{ extract_type . }}  `json:"{{ case .Name }}_NEQ,omitempty"`
+            {{- if .Type | eq "bool" }}
+                {{ pascal .Name }}EQ  *{{ .Type }}  `json:"{{ case .Name }}_EQ,omitempty"`
+                {{ pascal .Name }}NEQ *{{ .Type }}  `json:"{{ case .Name }}_NEQ,omitempty"`
             {{- end }}
             {{- if is_comparable . }}
-                {{ pascal .Name }}      *{{ extract_type . }}  `json:"{{ case .Name }},omitempty"`
-                {{ pascal .Name }}NEQ   *{{ extract_type . }}  `json:"{{ case .Name }}_NEQ,omitempty"`
-                {{ pascal .Name }}In    []{{ extract_type . }} `json:"{{ case .Name }}_In,omitempty"`
-                {{ pascal .Name }}NotIn []{{ extract_type . }} `json:"{{ case .Name }}_NotIn,omitempty"`
+                {{ pascal .Name }}      *{{ .Type }}  `json:"{{ case .Name }},omitempty"`
+                {{ pascal .Name }}NEQ   *{{ .Type }}  `json:"{{ case .Name }}_NEQ,omitempty"`
+                {{ pascal .Name }}In    []{{ .Type }} `json:"{{ case .Name }}_In,omitempty"`
+                {{ pascal .Name }}NotIn []{{ .Type }} `json:"{{ case .Name }}_NotIn,omitempty"`
                 
-                {{- if (enum_or_edge_filed $s .) | not }}
-                    {{ pascal .Name }}GT    *{{ extract_type . }}  `json:"{{ case .Name }}_GT,omitempty"`
-                    {{ pascal .Name }}GTE   *{{ extract_type . }}  `json:"{{ case .Name }}_GTE,omitempty"`
-                    {{ pascal .Name }}LT    *{{ extract_type . }}  `json:"{{ case .Name }}_LT,omitempty"`
-                    {{ pascal .Name }}LTE   *{{ extract_type . }}  `json:"{{ case .Name }}_LTE,omitempty"`
+                {{- if (or .Enum .EdgeField) | not }}
+                    {{ pascal .Name }}GT    *{{ .Type }}  `json:"{{ case .Name }}_GT,omitempty"`
+                    {{ pascal .Name }}GTE   *{{ .Type }}  `json:"{{ case .Name }}_GTE,omitempty"`
+                    {{ pascal .Name }}LT    *{{ .Type }}  `json:"{{ case .Name }}_LT,omitempty"`
+                    {{ pascal .Name }}LTE   *{{ .Type }}  `json:"{{ case .Name }}_LTE,omitempty"`
                 {{- end }}
             {{- end }}
             {{- if .Optional }}
@@ -76,7 +67,7 @@ type OrderField struct {
                 {{ pascal .Name }}NotNil   *bool  `json:"{{ case .Name }}_NotNil,omitempty"`
             {{- end }}
             {{- if eq .Name "id" | not }}
-                {{- if extract_type . | eq "string"}}
+                {{- if .Type | eq "string"}}
                     {{ pascal .Name }}Contains  	 *string  `json:"{{ case .Name }}_Contains,omitempty"`
                     {{ pascal .Name }}HasPrefix 	 *string  `json:"{{ case .Name }}_HasPrefix,omitempty"`
                     {{ pascal .Name }}HasSuffix 	 *string  `json:"{{ case .Name }}_HasSuffix,omitempty"`
@@ -94,7 +85,7 @@ type OrderField struct {
                 Has{{pascal .N}}With  *{{pascal .T}}WhereInput `json:"{{ case (printf "has%sWith,omitempty" (pascal .T)) }}"`
             {{ end -}}
         {{- end -}}
-    }
+    } {{ if $g.Config.WithSwaggerRename }}// @name {{ $s.Name }}WhereInput {{ end }}
 
     var  ErrEmpty{{ .Name }}WhereInput = errors.New("ent: empty {{ pascal .Name }}WhereInput")
 
@@ -163,7 +154,7 @@ type OrderField struct {
             {{- end -}}
 
             // "{{case .Name}}" field predicates.
-            {{- if extract_type . | eq "bool" }}
+            {{- if .Type | eq "bool" }}
             if v := i.{{ pascal .Name }}EQ; v != nil {
 			    predicates = append(predicates, {{ lower $s.Name }}.{{ pascal .Name }}EQ(*v))
 		    }
@@ -185,7 +176,7 @@ type OrderField struct {
                     predicates = append(predicates, {{ lower $s.Name }}.{{ pascal .Name }}NotIn(v...))
                 }
 
-                {{- if (enum_or_edge_filed $s .) | not }}
+                {{- if (or .Enum .EdgeField) | not }}
                     if v := i.{{pascal .Name}}GT; v != nil {
 				    predicates = append(predicates, {{  lower $s.Name }}.{{ pascal .Name }}GT(*v))
                     }
@@ -209,7 +200,7 @@ type OrderField struct {
                 }
             {{end}}
             
-            {{- if extract_type . | eq "string" }}
+            {{- if .Type | eq "string" }}
 				{{- if eq .Name "id" | not}}
                     if v := i.{{pascal .Name }}Contains; v != nil {
                         predicates = append(predicates, {{ lower $s.Name }}.{{ pascal .Name }}Contains(*v))

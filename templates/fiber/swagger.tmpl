@@ -1,0 +1,35 @@
+//go:build ignore
+// +build ignore
+
+package models
+
+import "app/ent"
+
+type Error struct {
+	Ok    bool   `json:"ok,omitempty"`
+	Error string `json:"error,omitempty"`
+} //@name Error
+
+type Success struct {
+	Ok bool `json:"ok,omitempty"`
+} //@name Success
+
+{{ range .Schemas }} 
+type Query{{ pascal .Name | plural }}Success struct {
+	Ok    bool          `json:"ok,omitempty"`
+	Total int           `json:"total,omitempty"`
+	Data  []ent.{{ pascal .Name }} `json:"data,omitempty"`
+} //@name Query{{ pascal .Name | plural }}Success
+{{ end -}}
+
+{{ range .Schemas }} 
+type {{ pascal .Name }}CreateSuccess struct {
+	Ok   bool        `json:"ok,omitempty"`
+	Data ent.{{ pascal .Name }} `json:"data,omitempty"`
+} // @name {{ pascal .Name }}CreateSuccess
+
+type {{ pascal .Name }}UpdateSuccess struct {
+	Ok   bool        `json:"ok,omitempty"`
+	Data ent.{{ pascal .Name }} `json:"data,omitempty"`
+} // @name {{ pascal .Name }}UpdateSuccess
+{{ end -}}

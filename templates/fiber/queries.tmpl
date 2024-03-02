@@ -1,0 +1,70 @@
+package handlers
+
+import (
+    "{{ .Config.Package }}/db"
+    "{{ .Config.Package }}/ent"
+    "encoding/json"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+{{ range .Schemas }}
+// Query{{ pascal .Name | plural }} godoc
+//
+//	@Summary	Query {{ plural .Name }}
+//	@Tags		{{ plural .Name | kebab }}
+//	@Produce	json
+//	@Param		query	query		{{ pascal .Name }}QueryInput	false	"Query object"
+//	@Success	200		{object}    Query{{ pascal .Name | plural }}Success
+//	@Failure	400		{object}	Error
+//	@Router		/{{ plural .Name | kebab }}/ [get]
+func Query{{ pascal .Name | plural }}(c *fiber.Ctx) error {
+
+	query := c.Query("query")
+	queryInput := new(ent.{{ pascal .Name }}QueryInput)
+
+	if query != "" {
+		err := json.Unmarshal([]byte(query), queryInput)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"ok":    false,
+				"error": err.Error(),
+			})
+		}
+	}
+
+	limit := queryInput.Limit
+	offset := queryInput.Offset
+
+	queryInput.Limit = nil
+	queryInput.Offset = nil
+
+	client := db.Client.{{ pascal .Name }}.Query().SetInput(queryInput)
+
+	total, err := client.Count(c.UserContext())
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"ok":    false,
+			"error": err.Error(),
+		})
+	}
+
+	if limit != nil {
+		client.Limit(*limit)
+	}
+
+	if offset != nil {
+		client.Offset(*offset)
+	}
+
+	data, err := client.All(c.UserContext())
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"ok":    false,
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{"ok": true, "total": total, "data": data})
+}
+{{ end -}}

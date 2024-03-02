@@ -1,0 +1,57 @@
+import * as T from "./types";
+
+type ID = string;
+type ErrorResponse = { ok: false; error: string };
+type DeleteResponse = ErrorResponse | { ok: true };
+type MutationResponse<T> = ErrorResponse | { ok: true; data: T };
+type QueryResponse<T> = ErrorResponse | { ok: true; total: number; data: T };
+
+export async function request<T>(url: string, init?: RequestInit) {
+    const headers = {
+        "content-type": "application/json",
+        ...init?.headers,
+    };
+
+    const response = await fetch(url, {
+        ...init,
+        credentials: "include",
+        headers,
+    });
+
+    if (response.headers.get("content-type") == "application/json") {
+        return response.json() as T;
+    } else {
+        return { ok: false, error: "unknown error on request" } as T;
+    }
+}
+
+export function Api(url: string) {
+    url = url.replace(/\/+$/, "");
+    return {
+        {{ range .Schemas }}
+        {{ pascal .Name }}: {
+            Query: async (query?: T.{{ pascal .Name }}QueryInput) =>
+                request<Promise<QueryResponse<T.{{ pascal .Name }}>>>(
+                    `${url}/{{ plural .Name | kebab }}${
+                        query ? `?query=${JSON.stringify(query)}` : ""
+                    }`,
+                    {}
+                ),
+            Create: async (input: T.{{ pascal .Name }}CreateInput) =>
+                request<Promise<MutationResponse<T.{{ pascal .Name }}>>>(`${url}/{{ plural .Name | kebab }}`, {
+                    method: "POST",
+                    body: JSON.stringify(input),
+                }),
+            Update: async (input: T.{{ pascal .Name }}UpdateInput) =>
+                request<Promise<MutationResponse<T.{{ pascal .Name }}>>>(`${url}/{{ plural .Name | kebab }}`, {
+                    method: "PATCH",
+                    body: JSON.stringify(input),
+                }),
+            Delete: async (id: ID) =>
+                request<Promise<DeleteResponse>>(`${url}/{{ plural .Name | kebab }}/${id}`, {
+                    method: "DELETE",
+                }),
+        },
+        {{ end }}
+    };
+}

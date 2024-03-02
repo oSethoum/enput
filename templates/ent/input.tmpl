@@ -1,42 +1,52 @@
 package ent
 
-{{ $g := .}}
+{{ $g := . }}
 
-{{ $imps := imports .Graph true }}
-{{ $imps_len := len $imps }}
-
-{{- if gt $imps_len 0 }}
+{{ if or ( gt ( len .Imports ) 0 ) ( gt ( len .InputImports ) 0 )}}
 import (
-    {{ range $imps}}
+    {{ range .Imports -}}
+    "{{ . }}"
+    {{ end -}}
+    {{ range .InputImports -}}
     "{{ . }}"
     {{ end }}
 )
-{{- end}}
-    
+{{ end }}
 
 {{- range .Schemas }}
     type {{ .Name }}CreateInput struct {
         {{- range .Fields }}
-            {{ pascal .Name }} {{ if null_field_create . -}}*{{- end -}}{{ extract_type . }} `{{ tag . }}`
+            {{ pascal .Name }} {{ if or .Optional .HasDefault -}}*{{- end -}}{{ .Type }} `{{ .Tag }}`
         {{- end }}
         {{- range .Edges }}
-            {{- if edge_field . | not }}
+            {{ if not .EdgeField }} 
                 {{- if .Unique}}
-                    {{- if .Required }}
-                        {{ pascal .Name }}ID {{ edge_id_type . $g.Graph }} `{{ unique_edge_tag .Name }}`
+                    {{- if .Optional }}
+                        {{ pascal .Name }}ID *{{ $g.Config.IDType }} `{{ .Tags.UniqueTag }}`
                     {{- else}}
-                        {{ pascal .Name }}ID *{{ edge_id_type . $g.Graph }} `{{ unique_edge_tag .Name }}`
+                        {{ pascal .Name }}ID {{ $g.Config.IDType }} `{{ .Tags.UniqueTag }}`
                     {{- end}}
                 {{- else}}
-                    Add{{ pascal .Name }}IDs []{{ edge_id_type . $g.Graph }} `{{ add_ids_tag .Name }}`
+                    Add{{ pascal .Name }}IDs []{{ $g.Config.IDType }} `{{ .Tags.AddIdsTag }}`
                 {{- end }}
+            {{ end -}}
+        {{- end }}
+        CreateEdges *{{ .Name }}CreateEdges `json:"{{case "CreateEdges"}},omitempty"`
+        
+    } {{ if $g.Config.WithSwaggerRename }}// @name {{ .Name }}CreateInput {{ end }}
+
+
+    type {{ .Name }}CreateEdges struct {
+        {{- range .Edges }}
+            {{- if .Unique}}
+                {{ pascal .Name }} *{{ pascal .Type }}CreateInput `json:"{{ case .Name }},omitempty"`
             {{- end }}
         {{- end -}}
-    }
+    } {{ if $g.Config.WithSwaggerRename }}// @name {{ .Name }}CreateEdges {{ end }}
 
     func (i *{{ .Name }}CreateInput) Mutate(m *{{ .Name }}Mutation) {
         {{- range .Fields }}
-            {{- if null_field_create .}} 
+            {{- if or .Optional .HasDefault }} 
             if v := i.{{ pascal .Name }}; v != nil {
             m.Set{{pascal .Name}}(*v)
             }
@@ -45,19 +55,19 @@ import (
             {{- end }}
         {{- end }}
         {{- range .Edges }}
-            {{- if edge_field . | not}}
+            {{ if not .EdgeField }} 
                 {{- if .Unique }}
-                    {{- if .Required }}
-                    m.Set{{pascal .Name}}ID(i.{{ pascal .Name }}ID)
-                    {{- else }}
+                    {{- if .Optional }}
                     if v := i.{{ pascal .Name }}ID; v!= nil {
                         m.Set{{pascal .Name}}ID(*v)
                     }
+                    {{- else }}
+                    m.Set{{pascal .Name}}ID(i.{{ pascal .Name }}ID)
                     {{- end }}
                 {{- else }}
                     m.Add{{ singular .Name | pascal }}IDs(i.Add{{ pascal .Name }}IDs...)
                 {{- end }}
-            {{- end }}
+            {{ end }}
         {{- end}}
     }
 
@@ -68,33 +78,34 @@ import (
     
     type {{ .Name }}UpdateInput struct {
         {{- range .Fields }}
-            {{ pascal .Name }} {{ if null_field_update . -}}*{{- end -}} {{ extract_type . }} `{{ tag . }}`
+            {{ pascal .Name }} {{ if not .Slice -}}*{{- end -}} {{ .Type }} `{{ .Tag }}`
         {{- end }}
         {{- range .Edges }}
-        {{- if edge_field . | not }}
-            {{- if .Unique}}
-                {{ pascal .Name }}ID *{{ edge_id_type . $g.Graph }} `json:"{{ case .Name }}Id,omitempty"`
-                {{- if .Required | not}}
-                    Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }},omitempty"`
-                {{- end }}
-            {{- else }}
-                Add{{ singular .Name | pascal }}IDs []{{ edge_id_type . $g.Graph }} `{{ add_ids_tag .Name }}`
-                {{- if not .Required }}
-                    Remove{{ singular .Name | pascal }}IDs []{{ edge_id_type . $g.Graph }} `{{ remove_ids_tag .Name }}`
-                    Clear{{ pascal .Name }} bool `{{ clear_tag .Name }}`
-                {{- end }}
-            {{- end}}
+            {{ if not .EdgeField }}
+                {{- if .Unique}}
+                    {{ pascal .Name }}ID *{{ $g.Config.IDType }} `json:"{{ case .Name }}Id,omitempty"`
+                    {{- if .Optional}}
+                        Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }},omitempty"`
+                    {{- end }}
+                {{- else }}
+                    Add{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `{{ .Tags.AddIdsTag }}`
+                    {{- if .Optional }}
+                        Remove{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `{{ .Tags.RemoveIdsTag }}`
+                        Clear{{ pascal .Name }} bool `{{ .Tags.ClearTag }}`
+                    {{- end }}
+                {{- end}}
+            {{ end -}}
         {{- end }}
-    {{- end}}
-    }
+
+    } {{ if $g.Config.WithSwaggerRename }}// @name {{ .Name }}UpdateInput {{ end }}
 
     func (i *{{ .Name }}UpdateInput) Mutate(m *{{ .Name }}Mutation) {
     {{- range .Fields }}
-        {{- if null_field_update .}} 
+        {{- if not .Slice }} 
         if v := i.{{ pascal .Name }}; v != nil {
         m.Set{{pascal .Name}}(*v)
         }
-        {{ else if is_slice . }}
+        {{ else if .Slice }}
         if i.{{ pascal .Name }} != nil {
             m.Set{{pascal .Name}}(i.{{ pascal .Name }})
         }
@@ -103,26 +114,26 @@ import (
         {{- end }}
     {{- end -}}
     {{- range .Edges}}
-        {{- if edge_field . | not }}
+        {{ if not .EdgeField }}
             {{- if .Unique}}
                 if v := i.{{ pascal .Name }}ID; v != nil {
                     m.Set{{ pascal .Name }}ID(*v)
                 }
-                {{- if .Required | not }}
+                {{- if .Optional }}
                     if i.Clear{{ pascal .Name }} {
                         m.Clear{{ pascal .Name }}()
                     }
                 {{- end }}
             {{- else }}
                 m.Add{{ singular .Name | pascal }}IDs(i.Add{{ singular .Name | pascal }}IDs...)
-                {{- if not .Required }}
+                {{- if .Optional }}
                     m.Remove{{ singular .Name | pascal }}IDs(i.Remove{{ singular .Name | pascal }}IDs...)
                     if i.Clear{{ pascal .Name }} {
                         m.Clear{{ pascal .Name }}()
                     }
                 {{- end }}
             {{- end}}
-        {{- end }}
+        {{ end -}}
     {{- end}}
     }
 
