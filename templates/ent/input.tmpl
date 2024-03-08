@@ -21,11 +21,13 @@ import (
         {{- range .Edges }}
             {{ if not .EdgeField }} 
                 {{- if .Unique}}
-                    {{- if .Optional }}
-                        {{ pascal .Name }}ID *{{ $g.Config.IDType }} `{{ .Tags.UniqueTag }}`
-                    {{- else}}
-                        {{ pascal .Name }}ID {{ $g.Config.IDType }} `{{ .Tags.UniqueTag }}`
-                    {{- end}}
+                    {{- if .OwnerFK }} 
+                        {{- if .Optional }}
+                            {{ pascal .Name }}ID *{{ $g.Config.IDType }} `{{ .Tags.UniqueTag }}`
+                        {{- else}}
+                            {{ pascal .Name }}ID {{ $g.Config.IDType }} `{{ .Tags.UniqueTag }}`
+                        {{- end}}
+                    {{ end -}}
                 {{- else}}
                     Add{{ pascal .Name }}IDs []{{ $g.Config.IDType }} `{{ .Tags.AddIdsTag }}`
                 {{- end }}
@@ -57,13 +59,15 @@ import (
         {{- range .Edges }}
             {{ if not .EdgeField }} 
                 {{- if .Unique }}
-                    {{- if .Optional }}
-                    if v := i.{{ pascal .Name }}ID; v!= nil {
-                        m.Set{{pascal .Name}}ID(*v)
-                    }
-                    {{- else }}
-                    m.Set{{pascal .Name}}ID(i.{{ pascal .Name }}ID)
-                    {{- end }}
+                    {{ if .OwnerFK }}
+                        {{- if .Optional }}
+                        if v := i.{{ pascal .Name }}ID; v!= nil {
+                            m.Set{{pascal .Name}}ID(*v)
+                        }
+                        {{- else }}
+                        m.Set{{pascal .Name}}ID(i.{{ pascal .Name }}ID)
+                        {{- end }}
+                    {{ end -}}
                 {{- else }}
                     m.Add{{ singular .Name | pascal }}IDs(i.Add{{ pascal .Name }}IDs...)
                 {{- end }}
@@ -83,10 +87,12 @@ import (
         {{- range .Edges }}
             {{ if not .EdgeField }}
                 {{- if .Unique}}
-                    {{ pascal .Name }}ID *{{ $g.Config.IDType }} `json:"{{ case .Name }}Id,omitempty"`
-                    {{- if .Optional}}
-                        Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }},omitempty"`
-                    {{- end }}
+                    {{- if .OwnerFK }}
+                        {{ pascal .Name }}ID *{{ $g.Config.IDType }} `json:"{{ case .Name }}Id,omitempty"`
+                        {{- if .Optional}}
+                            Clear{{ pascal .Name }} bool `json:"clear{{ pascal .Name }},omitempty"`
+                        {{- end }}
+                    {{ end -}}
                 {{- else }}
                     Add{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `{{ .Tags.AddIdsTag }}`
                     {{- if .Optional }}
@@ -126,14 +132,16 @@ import (
     {{- range .Edges}}
         {{ if not .EdgeField }}
             {{- if .Unique}}
-                if v := i.{{ pascal .Name }}ID; v != nil {
-                    m.Set{{ pascal .Name }}ID(*v)
-                }
-                {{- if .Optional }}
-                    if i.Clear{{ pascal .Name }} {
-                        m.Clear{{ pascal .Name }}()
+                {{- if .OwnerFK }} 
+                    if v := i.{{ pascal .Name }}ID; v != nil {
+                        m.Set{{ pascal .Name }}ID(*v)
                     }
-                {{- end }}
+                    {{- if .Optional }}
+                        if i.Clear{{ pascal .Name }} {
+                            m.Clear{{ pascal .Name }}()
+                        }
+                    {{- end }}
+                {{ end }}
             {{- else }}
                 m.Add{{ singular .Name | pascal }}IDs(i.Add{{ singular .Name | pascal }}IDs...)
                 {{- if .Optional }}

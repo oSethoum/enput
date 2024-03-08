@@ -45,6 +45,9 @@ func  (m *Mutator)Create{{ pascal .Name }}(input *ent.{{ pascal .Name }}CreateIn
             {{ end -}}
 
             {{ snake .Name }}, err := m.client.{{ pascal .Name }}.Create().SetInput(input).Save(m.ctx)
+            if err != nil {
+                return nil, err
+            }
 
             {{ range  .Edges }}
                 {{ if .Unique }}

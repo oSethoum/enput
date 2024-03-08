@@ -1,10 +1,10 @@
 import * as T from "./types";
 
-type ID = string;
-type ErrorResponse = { ok: false; error: string };
-type DeleteResponse = ErrorResponse | { ok: true };
-type MutationResponse<T> = ErrorResponse | { ok: true; data: T };
-type QueryResponse<T> = ErrorResponse | { ok: true; total: number; data: T };
+export type ID = string;
+export type ErrorResponse = { ok: false; error: string };
+export type DeleteResponse = ErrorResponse | { ok: true };
+export type MutationResponse<T> = ErrorResponse | { ok: true; data: T };
+export type QueryResponse<T> = ErrorResponse | { ok: true; total: number; data: T };
 
 export async function request<T>(url: string, init?: RequestInit) {
     const headers = {
