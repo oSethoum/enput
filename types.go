@@ -53,15 +53,18 @@ type Config struct {
 	IDType              string
 	TsClientPath        string
 	DartClientPath      string
-	Files               []File
+	OutDir              string
+	Debug               bool
 	Package             string
-	IgnoreSchemas       []string
 	FormTag             bool
 	WithSwaggerRename   bool
+	WithSwagger         bool
 	WithNestedMutations bool
 	WithHooks           bool
 	WithInterceptors    bool
 	WithSecurity        bool
+	Files               []File
+	IgnoreSchemas       []string
 }
 
 type comparable interface {
