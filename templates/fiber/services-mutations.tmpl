@@ -1,5 +1,7 @@
 package handlers
 
+{{ $ := . }}
+
 import (
 	"{{ .Config.Package }}/db"
 	"{{ .Config.Package }}/ent"
@@ -10,6 +12,7 @@ import (
 
 {{ range .Schemas }}
 
+{{ if $.Config.WithSwagger }}
 // Create{{ pascal .Name }} godoc
 //
 //	@Summary	Create {{ pascal .Name }}
@@ -20,6 +23,7 @@ import (
 //	@Failure	400		{object}	Error
 //	@Failure	500		{object}	Error
 //	@Router		/{{ plural .Name | kebab }}		[post]
+{{ end -}}
 func Create{{ pascal .Name }}(c *fiber.Ctx) error {
 
 	body := new(ent.{{ pascal .Name }}CreateInput)
@@ -71,6 +75,7 @@ func Create{{ pascal .Name }}(c *fiber.Ctx) error {
 	})
 }
 
+{{ if $.Config.WithSwagger }}
 // Update{{ pascal .Name }} godoc
 //
 //	@Summary	Update {{ pascal .Name }}
@@ -82,6 +87,7 @@ func Create{{ pascal .Name }}(c *fiber.Ctx) error {
 //	@Failure	400		{object}	Error
 //	@Failure	500		{object}	Error
 //	@Router		/{{ plural .Name | kebab }}/ [patch]
+{{ end -}}
 func Update{{ pascal .Name }}(c *fiber.Ctx) error {
 
 	body := new(ent.{{ pascal .Name }}UpdateInput)
@@ -133,6 +139,7 @@ func Update{{ pascal .Name }}(c *fiber.Ctx) error {
 	})
 }
 
+{{ if $.Config.WithSwagger }}
 // Delete{{ pascal .Name }} godoc
 //
 //	@Summary	Delete {{ pascal .Name }}
@@ -143,6 +150,7 @@ func Update{{ pascal .Name }}(c *fiber.Ctx) error {
 //	@Failure	400		{object}	Error
 //	@Failure	500		{object}	Error
 //	@Router		/{{ plural .Name | kebab }}/:id 	[delete]
+{{ end -}}
 func Delete{{ pascal .Name }}(c *fiber.Ctx) error {
 
 	id := c.Params("id")

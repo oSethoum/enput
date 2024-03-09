@@ -1,5 +1,7 @@
 package handlers
 
+{{ $ := . }}
+
 import (
     "{{ .Config.Package }}/db"
     "{{ .Config.Package }}/ent"
@@ -9,6 +11,7 @@ import (
 )
 
 {{ range .Schemas }}
+{{ if $.Config.WithSwagger }}
 // Query{{ pascal .Name | plural }} godoc
 //
 //	@Summary	Query {{ plural .Name }}
@@ -18,6 +21,7 @@ import (
 //	@Success	200		{object}    Query{{ pascal .Name | plural }}Success
 //	@Failure	400		{object}	Error
 //	@Router		/{{ plural .Name | kebab }}/ [get]
+{{ end -}}
 func Query{{ pascal .Name | plural }}(c *fiber.Ctx) error {
 
 	query := c.Query("query")
