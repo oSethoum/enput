@@ -11,6 +11,8 @@ import (
 
 {{ range .Schemas }}
 
+
+{{ if ignore_create . | not }}
 {{ if $.Config.WithSwagger }}
 // Create{{ pascal .Name }} godoc
 //
@@ -48,7 +50,9 @@ func Create{{ pascal .Name }}(c *fiber.Ctx) error {
 		"data": entity,
 	})
 }
+{{ end -}}
 
+{{ if ignore_update . | not }}
 {{ if $.Config.WithSwagger }}
 // Update{{ pascal .Name }} godoc
 //
@@ -88,7 +92,9 @@ func Update{{ pascal .Name }}(c *fiber.Ctx) error {
 		"data": entity,
 	})
 }
+{{ end -}}
 
+{{ if ignore_delete . | not  }}
 {{ if $.Config.WithSwagger }}
 // Delete{{ pascal .Name }} godoc
 //
@@ -118,4 +124,5 @@ func Delete{{ pascal .Name }}(c *fiber.Ctx) error {
 		"ok": true,
 	})
 }
+{{ end -}}
 {{ end -}}

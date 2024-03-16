@@ -64,7 +64,14 @@ type Config struct {
 	WithInterceptors    bool
 	WithSecurity        bool
 	Files               []File
-	IgnoreSchemas       []string
+	IgnoreSchemas       IgnoreSchemas
+}
+
+type IgnoreSchemas struct {
+	Query  []string
+	Create []string
+	Update []string
+	Delete []string
 }
 
 type comparable interface {

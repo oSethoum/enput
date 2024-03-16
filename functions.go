@@ -39,6 +39,22 @@ func (e *Extension) initFunctions() {
 		})
 	}
 
+	ignore_query := func(s Schema) bool {
+		return in(s.Name, e.data.Config.IgnoreSchemas.Query)
+	}
+
+	ignore_create := func(s Schema) bool {
+		return in(s.Name, e.data.Config.IgnoreSchemas.Create)
+	}
+
+	ignore_update := func(s Schema) bool {
+		return in(s.Name, e.data.Config.IgnoreSchemas.Update)
+	}
+
+	ignore_delete := func(s Schema) bool {
+		return in(s.Name, e.data.Config.IgnoreSchemas.Delete)
+	}
+
 	order_fields := func(s Schema) string {
 		fields := []string{}
 		for _, f := range s.Fields {
@@ -81,6 +97,10 @@ func (e *Extension) initFunctions() {
 	// gen.Funcs["aggregate_fields"] = aggregate_fields
 	// gen.Funcs["group_by_fields"] = group_by_fields
 	gen.Funcs["is_comparable"] = is_comparable
+	gen.Funcs["ignore_query"] = ignore_query
+	gen.Funcs["ignore_create"] = ignore_create
+	gen.Funcs["ignore_update"] = ignore_update
+	gen.Funcs["ignore_delete"] = ignore_delete
 	gen.Funcs["case"] = strCase
 	gen.Funcs["pascal"] = pascal
 	gen.Funcs["kebab"] = kebab

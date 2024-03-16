@@ -19,6 +19,7 @@ func NewMutator(ctx context.Context, client *ent.Client) *Mutator {
 
 {{ range .Schemas }}
 {{ $s := . }}
+
 func  (m *Mutator)Create{{ pascal .Name }}(input *ent.{{ pascal .Name }}CreateInput) (*ent.{{ pascal .Name }}, error) {
     {{ if gt ( len .Edges ) 0 }} 
         if input.CreateEdges == nil {
