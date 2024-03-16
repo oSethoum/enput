@@ -33,11 +33,14 @@ import (
                 {{- end }}
             {{ end -}}
         {{- end }}
+
+        {{ if gt ( len .Edges) 0 }} 
         CreateEdges *{{ .Name }}CreateEdges `json:"{{case "CreateEdges"}},omitempty"`
+        {{ end }}
         
     } {{ if $g.Config.WithSwaggerRename }}// @name {{ .Name }}CreateInput {{ end }}
 
-
+    {{ if gt ( len .Edges) 0 }} 
     type {{ .Name }}CreateEdges struct {
         {{- range .Edges }}
             {{- if .Unique}}
@@ -45,6 +48,7 @@ import (
             {{- end }}
         {{- end -}}
     } {{ if $g.Config.WithSwaggerRename }}// @name {{ .Name }}CreateEdges {{ end }}
+    {{ end }}
 
     func (i *{{ .Name }}CreateInput) Mutate(m *{{ .Name }}Mutation) {
         {{- range .Fields }}
@@ -94,19 +98,21 @@ import (
                         {{- end }}
                     {{ end -}}
                 {{- else }}
-                    Add{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `{{ .Tags.AddIdsTag }}`
                     {{- if .Optional }}
                         Remove{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `{{ .Tags.RemoveIdsTag }}`
                         Clear{{ pascal .Name }} bool `{{ .Tags.ClearTag }}`
                     {{- end }}
+                    Add{{ singular .Name | pascal }}IDs []{{ $g.Config.IDType }} `{{ .Tags.AddIdsTag }}`
                 {{- end}}
             {{ end -}}
         {{- end }}
-
+        {{ if gt ( len .Edges) 0 }} 
         UpdateEdges *{{ .Name }}UpdateEdges `json:"{{case "UpdateEdges"}},omitempty"`
+        {{ end }}
 
     } {{ if $g.Config.WithSwaggerRename }}// @name {{ .Name }}UpdateInput {{ end }}
 
+    {{ if gt ( len .Edges) 0 }} 
     type {{ .Name }}UpdateEdges struct {
         {{- range .Edges }}
             {{- if .Unique}}
@@ -114,6 +120,7 @@ import (
             {{- end }}
         {{- end -}}
     } {{ if $g.Config.WithSwaggerRename }}// @name {{ .Name }}UpdateEdges {{ end }}
+    {{ end }}
 
     func (i *{{ .Name }}UpdateInput) Mutate(m *{{ .Name }}Mutation) {
     {{- range .Fields }}
@@ -143,13 +150,13 @@ import (
                     {{- end }}
                 {{ end }}
             {{- else }}
-                m.Add{{ singular .Name | pascal }}IDs(i.Add{{ singular .Name | pascal }}IDs...)
                 {{- if .Optional }}
                     m.Remove{{ singular .Name | pascal }}IDs(i.Remove{{ singular .Name | pascal }}IDs...)
                     if i.Clear{{ pascal .Name }} {
                         m.Clear{{ pascal .Name }}()
                     }
                 {{- end }}
+                m.Add{{ singular .Name | pascal }}IDs(i.Add{{ singular .Name | pascal }}IDs...)
             {{- end}}
         {{ end -}}
     {{- end}}

@@ -64,10 +64,6 @@ func  (m *Mutator)Create{{ pascal .Name }}(input *ent.{{ pascal .Name }}CreateIn
                 {{ end -}}
             {{ end -}}
 
-
-            if err != nil {
-                return nil, err
-            }
             {{ snake .Name }}.Edges = edges
             return {{ snake .Name }}, nil
         }

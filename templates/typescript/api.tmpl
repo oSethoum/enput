@@ -19,8 +19,31 @@ export async function request<T>(url: string, init?: RequestInit) {
     });
 
     if (response.headers.get("content-type") == "application/json") {
+        {{ if .Config.Debug }}
+        const json = (await response.json()) as T;
+        console.log({
+            url,
+            body:
+                init && init.body
+                    ? JSON.parse(init?.body?.toString())
+                    : undefined,
+            response: json,
+        });
+        return json;
+        {{else}} 
         return response.json() as T;
+        {{ end }}
     } else {
+     {{ if .Config.Debug }}
+        console.log({
+            url,
+            body:
+                init && init.body
+                    ? JSON.parse(init?.body?.toString())
+                    : undefined,
+            response: { ok: false, error: "unknown error on request" },
+        });
+     {{ end }}
         return { ok: false, error: "unknown error on request" } as T;
     }
 }

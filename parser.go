@@ -22,7 +22,7 @@ func (ex *Extension) parse(g *gen.Graph) {
 		for _, f := range nFields {
 			field := Field{
 				Name:       f.Name,
-				Type:       "any",
+				Type:       f.Type.String(),
 				Nillable:   f.Nillable,
 				Optional:   f.Optional,
 				HasDefault: f.Default,

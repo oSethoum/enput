@@ -5,7 +5,6 @@ type OrderDirection = "ASC" | "DESC";
 
 export interface {{ pascal .Name }} {
     {{ range .Fields }}
-    {{ if .Sensitive }} {{ continue }} {{ end -}}
     {{ if gt (len .Comment) 0 -}}
     /** {{ .Comment }} */
     {{ end -}}
@@ -23,7 +22,6 @@ export interface {{ pascal .Name }} {
 
 export interface {{ pascal .Name }}CreateInput{
     {{ range .Fields }}
-    {{ if .Sensitive }} {{ continue }} {{ end -}}
     {{ if gt (len .Comment) 0 -}} 
     /** {{ .Comment }} */
     {{ end -}}
@@ -46,9 +44,12 @@ export interface {{ pascal .Name }}CreateInput{
             {{ end  -}}
         {{ end -}}
     {{ end }}
+    {{ if gt ( len .Edges) 0 }} 
     {{ case "CreateEdges" }}?: {{ pascal .Name }}CreateEdges;
+    {{ end }}
 }
 
+{{ if gt ( len .Edges) 0 }} 
 export interface {{ pascal .Name }}CreateEdges {
     {{ range .Edges -}}
         {{ if .Unique -}}
@@ -59,10 +60,10 @@ export interface {{ pascal .Name }}CreateEdges {
         {{ end  -}}
     {{ end }}
 }
+{{ end }}
 
 export interface {{ pascal .Name }}UpdateInput{
     {{ range .Fields -}}
-        {{ if .Sensitive }} {{ continue }} {{ end -}}
         {{ if gt (len .Comment) 0 -}} 
         /** {{ .Comment }} */
         {{ end -}}
@@ -82,10 +83,12 @@ export interface {{ pascal .Name }}UpdateInput{
             {{ end -}}
         {{ end -}}
     {{ end -}}
-
-    {{ case "CreateEdges" }}?: {{ pascal .Name }}CreateEdges;
+    {{ if gt ( len .Edges) 0 }} 
+    {{ case "UpdateEdges" }}?: {{ pascal .Name }}UpdateEdges;
+    {{ end }}
 }
 
+{{ if gt ( len .Edges) 0 }} 
 export interface {{ pascal .Name }}UpdateEdges {
     {{ range .Edges -}}
         {{ if .Unique -}}
@@ -93,6 +96,7 @@ export interface {{ pascal .Name }}UpdateEdges {
         {{ end  -}}
     {{ end }}
 }
+{{ end }}
 
 type {{ pascal .Name }}OrderField = {{ order_fields . }}
 type {{ pascal .Name }}SelectField = {{ select_fields . }}
@@ -122,7 +126,6 @@ export interface {{ pascal .Name }}WhereInput {
     and?: {{ pascal .Name }}WhereInput[];
     
     {{- range .Fields }}
-        {{ if .Sensitive }} {{ continue }} {{ end -}}
         {{- if gt (len .Enums) 0 -}}
             {{ case .Name }}_EQ?:  {{ .Types.Ts }};
             {{ case .Name }}_NEQ?: {{ .Types.Ts }};

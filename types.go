@@ -124,6 +124,7 @@ type Schema struct {
 
 type Field struct {
 	Name       string
+	RawType    any
 	Type       string
 	Tag        string
 	Optional   bool
