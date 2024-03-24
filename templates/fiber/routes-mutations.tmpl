@@ -8,13 +8,13 @@ import (
 
 func mutations(r fiber.Router) {
     {{ range .Schemas -}} 
-    {{ if ignore_create . | not }} 
+    {{ if ignore_create . | not -}} 
     r.Post("/{{ plural .Name | kebab }}", handlers.Create{{ pascal .Name }})
     {{ end -}}
-    {{ if ignore_update . | not }} 
+    {{ if ignore_update . | not -}} 
     r.Patch("/{{ plural .Name | kebab }}", handlers.Update{{ pascal .Name }})
     {{ end -}}
-    {{ if ignore_delete . | not }} 
+    {{ if ignore_delete . | not -}} 
     r.Delete("/{{ plural .Name | kebab }}/:id", handlers.Delete{{ pascal .Name }})
     {{ end -}}
     {{ end }}

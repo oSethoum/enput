@@ -48,11 +48,16 @@ func (e *Extension) generate(next gen.Generator) gen.Generator {
 		}
 
 		if in(TsTypes, e.data.Config.Files) {
-			writeFile(path.Join(root, e.data.Config.TsClientPath, "types.ts"), parseTemplate("typescript/types", e.data))
+			for _, v := range e.data.Config.TsClientPath {
+
+				writeFile(path.Join(root, v, "types.ts"), parseTemplate("typescript/types", e.data))
+			}
 		}
 
 		if in(TsApi, e.data.Config.Files) {
-			writeFile(path.Join(root, e.data.Config.TsClientPath, "api.ts"), parseTemplate("typescript/api", e.data))
+			for _, v := range e.data.Config.TsClientPath {
+				writeFile(path.Join(root, v, "api.ts"), parseTemplate("typescript/api", e.data))
+			}
 		}
 
 		if e.data.Config.WithNestedMutations {
@@ -70,7 +75,9 @@ func (e *Extension) generate(next gen.Generator) gen.Generator {
 		}
 
 		if in(DartTypes, e.data.Config.Files) {
-			writeFile(path.Join(root, e.data.Config.DartClientPath, "types.dart"), parseTemplate("dart/types", e.data))
+			for _, v := range e.data.Config.DartClientPath {
+				writeFile(path.Join(root, v, "types.dart"), parseTemplate("dart/types", e.data))
+			}
 		}
 
 		return next.Generate(g)

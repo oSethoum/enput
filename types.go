@@ -51,8 +51,8 @@ type data struct {
 type Config struct {
 	Case                Case
 	IDType              string
-	TsClientPath        string
-	DartClientPath      string
+	TsClientPath        []string
+	DartClientPath      []string
 	OutDir              string
 	Debug               bool
 	Package             string

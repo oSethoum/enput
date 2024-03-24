@@ -7,44 +7,27 @@ export type MutationResponse<T> = ErrorResponse | { ok: true; data: T };
 export type QueryResponse<T> = ErrorResponse | { ok: true; total: number; data: T };
 
 export async function request<T>(url: string, init?: RequestInit) {
-    const headers = {
-        "content-type": "application/json",
-        ...init?.headers,
-    };
-
     const response = await fetch(url, {
         ...init,
         credentials: "include",
-        headers,
     });
 
     if (response.headers.get("content-type") == "application/json") {
-        {{ if .Config.Debug }}
-        const json = (await response.json()) as T;
-        console.log({
-            url,
-            body:
-                init && init.body
-                    ? JSON.parse(init?.body?.toString())
-                    : undefined,
-            response: json,
-        });
-        return json;
-        {{else}} 
+     {{ if .Config.Debug }}
+        const json = await response.json();
+        console.log({ url,body: init?.body, response: json })
+        return json as T;
+     {{ else }} 
         return response.json() as T;
-        {{ end }}
+     {{ end }}
     } else {
      {{ if .Config.Debug }}
-        console.log({
-            url,
-            body:
-                init && init.body
-                    ? JSON.parse(init?.body?.toString())
-                    : undefined,
-            response: { ok: false, error: "unknown error on request" },
-        });
+        const text = await response.text();
+        console.log({ ok: false, error: text })
+        return { ok: false, error: text } as T;
+     {{ else }}
+        return { ok: false, error: await response.text() } as T;
      {{ end }}
-        return { ok: false, error: "unknown error on request" } as T;
     }
 }
 
@@ -67,6 +50,9 @@ export function Api(url: string) {
                 request<Promise<MutationResponse<T.{{ pascal .Name }}>>>(`${url}/{{ plural .Name | kebab }}`, {
                     method: "POST",
                     body: JSON.stringify(input),
+                    headers: {
+                        "content-type":"application/json",
+                    }
                 }),
             {{ end -}}
             {{ if ignore_update . | not }} 
@@ -74,6 +60,9 @@ export function Api(url: string) {
                 request<Promise<MutationResponse<T.{{ pascal .Name }}>>>(`${url}/{{ plural .Name | kebab }}`, {
                     method: "PATCH",
                     body: JSON.stringify(input),
+                    headers: {
+                        "content-type":"application/json",
+                    }
                 }),
             {{ end -}}
             {{ if ignore_delete . | not }} 
