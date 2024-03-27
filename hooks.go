@@ -60,6 +60,12 @@ func (e *Extension) generate(next gen.Generator) gen.Generator {
 			}
 		}
 
+		if in(TsRequest, e.data.Config.Files) {
+			for _, v := range e.data.Config.TsClientPath {
+				writeFile(path.Join(root, v, "request.ts"), parseTemplate("typescript/request", e.data))
+			}
+		}
+
 		if e.data.Config.WithNestedMutations {
 			if in(Services, e.data.Config.Files) {
 				writeFile(path.Join(root, e.data.Config.OutDir, "services/mutations.go"), parseTemplate("ent/services", e.data))

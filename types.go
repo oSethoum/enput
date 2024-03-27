@@ -24,6 +24,7 @@ const (
 	DartTypes
 	TsTypes
 	TsApi
+	TsRequest
 	Swagger
 	Queries
 	Mutations
@@ -62,6 +63,7 @@ type Config struct {
 	WithNestedMutations bool
 	WithHooks           bool
 	WithInterceptors    bool
+	LocalStorageToken   bool
 	WithSecurity        bool
 	Files               []File
 	IgnoreSchemas       IgnoreSchemas
@@ -153,16 +155,18 @@ type FieldTypes struct {
 }
 
 type Edge struct {
-	Name      string
-	Type      string
-	Unique    bool
-	Optional  bool
-	Field     string
-	OwnerFK   bool
-	EdgeField bool
-	Tags      EdgeTags
-	Through   *Edge
-	Comment   string
+	Name       string
+	Type       string
+	Unique     bool
+	Optional   bool
+	Field      string
+	OwnerFK    bool
+	FkOptional bool
+	EdgeField  bool
+	InverseFk  string
+	Tags       EdgeTags
+	Through    *Edge
+	Comment    string
 }
 
 type EdgeTags struct {

@@ -2,6 +2,7 @@ package enput
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"entgo.io/ent/entc/gen"
@@ -108,14 +109,22 @@ func (ex *Extension) parse(g *gen.Graph) {
 		}
 
 		for _, e := range n.Edges {
-			edge := Edge{
-				Name:     e.Name,
-				Type:     e.Type.Name,
-				Unique:   e.Unique,
-				Optional: e.Optional,
-				OwnerFK:  e.OwnFK(),
 
-				Comment: e.Comment(),
+			fk, err := e.ForeignKey()
+
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			edge := Edge{
+				Name:       e.Name,
+				Type:       e.Type.Name,
+				Unique:     e.Unique,
+				Optional:   e.Optional,
+				OwnerFK:    e.OwnFK(),
+				InverseFk:  fk.Field.Name,
+				FkOptional: fk.Field.Optional,
+				Comment:    e.Comment(),
 			}
 
 			// Field

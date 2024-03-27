@@ -1,0 +1,40 @@
+{{ if not .Config.LocalStorageToken }}
+export async function request<T>(url: string, init?: RequestInit) {
+    const response = await fetch(url, {
+        ...init,
+        credentials: "include",
+    });
+
+    if (response.headers.get("content-type") == "application/json") {
+        const json = await response.json();
+        console.log({ url, body: init?.body, response: json });
+        return json as T;
+    } else {
+        const text = await response.text();
+        console.log({ ok: false, error: text });
+        return { ok: false, error: text } as T;
+    }
+}
+{{ else }}
+export async function request<T>(url: string, init?: RequestInit) {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(url, {
+        ...init,
+        headers: {
+            ...init?.headers,
+            token: token || "",
+        },
+    });
+
+    if (response.headers.get("content-type") == "application/json") {
+        const json = await response.json();
+        console.log({ url, body: init?.body, response: json });
+        return json as T;
+    } else {
+        const text = await response.text();
+        console.log({ ok: false, error: text });
+        return { ok: false, error: text } as T;
+    }
+}
+{{ end }}

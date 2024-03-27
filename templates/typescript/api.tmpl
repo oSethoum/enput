@@ -1,35 +1,11 @@
 import * as T from "./types";
+import { request } from "./request";
 
 export type ID = string;
 export type ErrorResponse = { ok: false; error: string };
 export type DeleteResponse = ErrorResponse | { ok: true };
 export type MutationResponse<T> = ErrorResponse | { ok: true; data: T };
 export type QueryResponse<T> = ErrorResponse | { ok: true; total: number; data: T };
-
-export async function request<T>(url: string, init?: RequestInit) {
-    const response = await fetch(url, {
-        ...init,
-        credentials: "include",
-    });
-
-    if (response.headers.get("content-type") == "application/json") {
-     {{ if .Config.Debug }}
-        const json = await response.json();
-        console.log({ url,body: init?.body, response: json })
-        return json as T;
-     {{ else }} 
-        return response.json() as T;
-     {{ end }}
-    } else {
-     {{ if .Config.Debug }}
-        const text = await response.text();
-        console.log({ ok: false, error: text })
-        return { ok: false, error: text } as T;
-     {{ else }}
-        return { ok: false, error: await response.text() } as T;
-     {{ end }}
-    }
-}
 
 export function Api(url: string) {
     url = url.replace(/\/+$/, "");

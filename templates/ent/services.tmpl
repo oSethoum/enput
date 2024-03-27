@@ -54,7 +54,11 @@ func  (m *Mutator)Create{{ pascal .Name }}(input *ent.{{ pascal .Name }}CreateIn
                 {{ if .Unique }}
                     {{ if not .OwnerFK }}
                     if input.CreateEdges.{{ pascal .Name }} != nil {
+                        {{ if .FkOptional }}
+                        input.CreateEdges.{{ pascal .Name }}.{{ pascal .Field }} = &{{ snake $s.Name }}.ID
+                        {{ else }}
                         input.CreateEdges.{{ pascal .Name }}.{{ pascal .Field }} = {{ snake $s.Name }}.ID
+                        {{ end -}}
                         {{ snake .Name }}, err := m.Create{{ .Type }}(input.CreateEdges.{{ pascal .Name }})
                         if err != nil {
                             return nil, err
