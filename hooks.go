@@ -15,7 +15,7 @@ func (e *Extension) generate(next gen.Generator) gen.Generator {
 		if e.data.Config.Debug {
 			b, err := json.Marshal(e.data)
 			if err == nil {
-				writeFile("data.json", string(b))
+				writeFile("schema.json", string(b))
 			}
 		}
 
