@@ -44,11 +44,14 @@ export interface {{ pascal .Name }}CreateInput{
             {{ end  -}}
         {{ end -}}
     {{ end }}
-    {{ if gt ( len .Edges) 0 }} 
-    {{ case "CreateEdges" }}?: {{ pascal .Name }}CreateEdges;
-    {{ end }}
+    {{ if $g.Config.WithNestedMutations }} 
+        {{ if gt ( len .Edges) 0 }} 
+        {{ case "CreateEdges" }}?: {{ pascal .Name }}CreateEdges;
+        {{ end }}
+    {{ end -}}
 }
 
+ {{ if $g.Config.WithNestedMutations }} 
 {{ if gt ( len .Edges) 0 }} 
 export interface {{ pascal .Name }}CreateEdges {
     {{ range .Edges -}}
@@ -61,6 +64,7 @@ export interface {{ pascal .Name }}CreateEdges {
     {{ end }}
 }
 {{ end }}
+{{ end -}}
 
 export interface {{ pascal .Name }}UpdateInput{
     {{ range .Fields -}}
@@ -83,11 +87,14 @@ export interface {{ pascal .Name }}UpdateInput{
             {{ end -}}
         {{ end -}}
     {{ end -}}
-    {{ if gt ( len .Edges) 0 }} 
-    {{ case "UpdateEdges" }}?: {{ pascal .Name }}UpdateEdges;
-    {{ end }}
+    {{ if $g.Config.WithNestedMutations }} 
+        {{ if gt ( len .Edges) 0 }} 
+        {{ case "UpdateEdges" }}?: {{ pascal .Name }}UpdateEdges;
+        {{ end }}
+    {{ end -}}
 }
 
+{{ if $g.Config.WithNestedMutations }} 
 {{ if gt ( len .Edges) 0 }} 
 export interface {{ pascal .Name }}UpdateEdges {
     {{ range .Edges -}}
@@ -97,6 +104,7 @@ export interface {{ pascal .Name }}UpdateEdges {
     {{ end }}
 }
 {{ end }}
+{{ end -}}
 
 type {{ pascal .Name }}OrderField = {{ order_fields . }}
 type {{ pascal .Name }}SelectField = {{ select_fields . }}
