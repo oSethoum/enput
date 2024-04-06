@@ -69,7 +69,6 @@ func Create{{ pascal .Name }}(c *fiber.Ctx) error {
 func Update{{ pascal .Name }}(c *fiber.Ctx) error {
 
 	body := new(ent.{{ pascal .Name }}UpdateInput)
-	id := c.Params("id")
 
 	err := c.BodyParser(body)
 	if err != nil {
@@ -79,7 +78,7 @@ func Update{{ pascal .Name }}(c *fiber.Ctx) error {
 		})
 	}
 
-	entity, err := db.Client.{{ pascal .Name }}.UpdateOneID(id).SetInput(body).Save(c.UserContext())
+	entity, err := db.Client.{{ pascal .Name }}.UpdateOneID(body.ID).SetInput(body).Save(c.UserContext())
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"ok":    false,

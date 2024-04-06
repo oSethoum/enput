@@ -1,8 +1,6 @@
 import * as T from "./types";
 import { request } from "./request";
 
-{{ $ := . }}
-
 export type ID = string;
 export type ErrorResponse = { ok: false; error: string };
 export type DeleteResponse = ErrorResponse | { ok: true };
@@ -14,7 +12,6 @@ export function Api(url: string) {
     return {
         {{ range .Schemas }}
         {{ snake .Name }}: {
-
             {{ if ignore_query . | not }}  
             query: async (query?: T.{{ pascal .Name }}QueryInput) =>
                 request<Promise<QueryResponse<Array<T.{{ pascal .Name }}>>>>(
@@ -24,7 +21,6 @@ export function Api(url: string) {
                     {}
                 ),
             {{ end }}
-
             {{ if ignore_create . | not }} 
             create: async (input: T.{{ pascal .Name }}CreateInput) =>
                 request<Promise<MutationResponse<T.{{ pascal .Name }}>>>(`${url}/{{ plural .Name | kebab }}`, {
@@ -35,21 +31,16 @@ export function Api(url: string) {
                     }
                 }),
             {{ end -}}
-
             {{ if ignore_update . | not }} 
-            
-            update: async ({{ if $.Config.WithNestedMutations | not }}id:string ,{{ end }} input: T.{{ pascal .Name }}UpdateInput) =>
-                request<Promise<MutationResponse<T.{{ pascal .Name }}>>>(`${url}/{{ plural .Name | kebab }}/{{ if $.Config.WithNestedMutations | not }}${id}{{end}}`, {
+            update: async (input: T.{{ pascal .Name }}UpdateInput) =>
+                request<Promise<MutationResponse<T.{{ pascal .Name }}>>>(`${url}/{{ plural .Name | kebab }}`, {
                     method: "PATCH",
                     body: JSON.stringify(input),
                     headers: {
                         "content-type":"application/json",
                     }
                 }),
-            
-            
             {{ end -}}
-
             {{ if ignore_delete . | not }} 
             delete: async (id: ID) =>
                 request<Promise<DeleteResponse>>(`${url}/{{ plural .Name | kebab }}/${id}`, {
