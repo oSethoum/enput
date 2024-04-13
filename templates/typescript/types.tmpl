@@ -27,9 +27,9 @@ export interface {{ pascal .Name }}CreateInput{
     {{ end -}}
     {{- if and ( .EdgeField ) ( not .Optional ) -}} 
         /** Required Edge Field */
-        {{ case .Name }}?: {{ .Types.Ts }};
+        {{ case .Name }}?: {{ .Types.Ts }} | null;
     {{ else }}
-        {{ case .Name }}{{- if or .Optional .Nillable .HasDefault }}?{{- end}}: {{ .Types.Ts }};
+        {{ case .Name }}{{- if or .Optional .Nillable .HasDefault }}?{{- end}}: {{ .Types.Ts }} {{- if or .Optional .Nillable .HasDefault }}| null{{- end}};
     {{ end -}}
     {{ end -}}
     {{ range .Edges -}}
@@ -38,7 +38,7 @@ export interface {{ pascal .Name }}CreateInput{
         {{ end -}}
         {{- if not .EdgeField  -}}
             {{ if .Unique -}}
-                {{ case ( printf "%sId" (pascal .Name) ) }}{{- if .Optional }}?{{- end}}: {{ $g.Config.IDType }};
+                {{ case ( printf "%sId" (pascal .Name) ) }}{{- if .Optional }}?{{- end}}: {{ $g.Config.IDType }} {{- if .Optional }}| null{{- end}};
             {{ else -}}
                 {{ case ( printf "add%sIds" (pascal .Name) ) }}?: {{ $g.Config.IDType }}[];
             {{ end  -}}
