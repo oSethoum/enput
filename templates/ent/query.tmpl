@@ -258,6 +258,16 @@ type OrderField struct {
         }
     }
 
+    func (q *{{ pascal .Name }}Query) SetWhere(w *{{ pascal .Name }}WhereInput) *{{ pascal .Name }}Query {
+        if w != nil {
+            ps, err := i.Where.P()
+            if err == nil {
+                q.Where(ps)
+            }
+        }
+        return q
+    }
+
     func (q *{{ pascal .Name }}Query) SetInput(i *{{ pascal .Name }}QueryInput) *{{ pascal .Name }}Query {
         if i == nil {
             return q
@@ -268,7 +278,7 @@ type OrderField struct {
                 q.Where(ps)
             }
         }
-            if v := i.Order; len(v) > 0 {
+        if v := i.Order; len(v) > 0 {
             for _, o := range v {
                 if strings.ToUpper(o.Direction) == "DESC" {
                     q.Order(Desc(o.Field))
