@@ -260,7 +260,7 @@ type OrderField struct {
 
     func (q *{{ pascal .Name }}Query) SetWhere(w *{{ pascal .Name }}WhereInput) *{{ pascal .Name }}Query {
         if w != nil {
-            ps, err := i.Where.P()
+            ps, err := w.P()
             if err == nil {
                 q.Where(ps)
             }
